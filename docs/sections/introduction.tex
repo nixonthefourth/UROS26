@@ -1,0 +1,14 @@
+\section{INTRODUCTION}
+When studying $N$-body celestial systems, selecting an appropriate numerical integration scheme is fundamental to obtaining accurate and meaningful results.
+Leapfrog and fourth-order Runge-Kutta (RK4) are routinely employed as standard integrators across modern computational astrophysics, particularly in non-chaotic regimes.
+
+This paper investigates the two-body gravitational problem within the frameworks of Newtonian mechanics and Hamiltonian formalism.
+In classical mechanics, the Hamiltonian is a function describing the total energy of a system in terms of its generalised coordinates and conjugate momenta, governing the time evolution of the system through Hamilton's equations.
+This formalism is particularly well-suited to the study of orbital dynamics, as it naturally exposes conserved quantities such as energy and angular momentum against which numerical schemes can be rigorously evaluated.
+
+We restrict our analysis to classical mechanics as defined by Newton and Kepler, applying the governing equations of the field accordingly.
+A high-performance simulation engine is developed in C++20 to carry out procedurally generated two-body simulations, with the engine exposed to Python 3.12 via a foreign function interface – a common and practical convention in scientific computing workflows.
+Simulation data is then analysed in Python to draw conclusions regarding integrator accuracy and computational efficiency.
+
+Having identified the most suitable standard integrator, we subsequently construct a higher-order scheme and repeat the analysis under equivalent conditions.
+Final conclusions are drawn on the basis of energy and angular momentum conservation behaviour, alongside a comparison of computational cost across all tested methods.
