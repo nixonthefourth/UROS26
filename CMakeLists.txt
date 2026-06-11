@@ -10,6 +10,8 @@ add_executable(UROS26
         include/physics.h++
         src/explicit_euler.cpp
         include/explicit_euler.h++
+        src/symplectic_euler.cpp
+        include/symplectic_euler.h++
 )
 
 

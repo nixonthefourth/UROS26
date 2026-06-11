@@ -25,6 +25,18 @@ namespace explicit_euler {
     /// @return Returns the updates velocity value based on the following formula:
     ///         v(n+1) = v(n) + a(n) * t
     Vec2 velocity_update(const Vec2& cur_velocity, float t, const Vec2& cur_acceleration);
+
+    /// @brief Runs Explicit Euler
+    /// @param star_pos Current position of the star
+    /// @param planet_pos Current position of the planet
+    /// @param star_mass Mass of the Star
+    /// @param planet_mass Mass of the planet
+    /// @param t Timestep
+    /// @param iterations Number of iterations algorithm should run
+    /// @param G Gravitational constant
+    void run_explicit_euler(const Vec2& star_pos, const Vec2& planet_pos,
+                            float star_mass, float planet_mass,
+                            float t, int iterations, float G);
 }
 
 #endif //UROS26_EXPLICIT_EULER_H
