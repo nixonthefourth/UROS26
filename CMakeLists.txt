@@ -8,6 +8,8 @@ add_executable(UROS26
         include/Vec2.h++
         src/physics.cpp
         include/physics.h++
+        src/explicit_euler.cpp
+        include/explicit_euler.h++
 )
 
 

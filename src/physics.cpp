@@ -42,6 +42,20 @@ namespace physics {
         return sqrt((G*m) / distance);
     }
 
+    /// @brief Finds the direction of the current velocity.
+    /// @param a The current coordinates of the heavier object.
+    /// @param b The current coordinates of the orbiting object.
+    /// @param distance Distance between the two objects.
+    /// @param vel Current velocity of the orbiting object.
+    /// @return Returns vector velocity
+    Vec2 find_vel_direction(const Vec2& a, const Vec2& b, float distance, float vel) {
+        Vec2 radius_vector = b - a;
+        Vec2 unit_perpendicular = radius_vector.perpendicular() / distance;
+        Vec2 vector_vel = vel * unit_perpendicular;
+
+        return vector_vel;
+    }
+
     /// @brief Finds energy conservation at a current timestep
     /// @param M Mass of the bigger object
     /// @param m Mass of a lighter object

@@ -4,7 +4,6 @@
 
 #ifndef UROS26_PHYSICS_H
 #define UROS26_PHYSICS_H
-#include <cmath>
 #include "Vec2.h++"
 
 namespace physics {
@@ -25,14 +24,22 @@ namespace physics {
     /// @details Simplifies Newton's `F=ma` and `F=G*(Mm/r^3)*r_vector.
     ///          Finds vector distance between the two objects for r_vector.
     /// @return Returns the acceleration
-    Vec2 find_g_acceleration(float m_a, float distance, const Vec2& a, const Vec2& b, const float G);
+    Vec2 find_g_acceleration(float m_a, float distance, const Vec2& a, const Vec2& b, float G);
 
     /// @brief Finds the circular velocity
     /// @param m Mass of the star
     /// @param distance Distance between two object
     /// @param G Constant of gravitational attraction
     /// @return Returns the circular orbital velocity of the object
-    float find_velocity(float m, float distance, const float G);
+    float find_velocity(float m, float distance, float G);
+
+    /// @brief Finds the direction of the current velocity.
+    /// @param a The current coordinates of the heavier object.
+    /// @param b The current coordinates of the orbiting object.
+    /// @param distance Distance between the two objects.
+    /// @param vel Current velocity of the orbiting object.
+    /// @return Returns vector velocity
+    Vec2 find_vel_direction(const Vec2& a, const Vec2& b, float distance, float vel);
 
     /// @brief Finds energy conservation at a current timestep
     /// @param M Mass of the bigger object
@@ -41,7 +48,7 @@ namespace physics {
     /// @param distance Distance between the two objects
     /// @param b_velocity Orbiting Object
     /// @return Returns the energy conservation of the integrator based on the Hamiltonian framework.
-    float find_energy_conservation(float M, float m, const float G, float distance, const Vec2& b_velocity);
+    float find_energy_conservation(float M, float m, float G, float distance, const Vec2& b_velocity);
 
     /// @brief Calculates the relative energy error in the system
     /// @param e_n Energy of the current timestep
