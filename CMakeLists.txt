@@ -12,6 +12,8 @@ add_executable(UROS26
         include/explicit_euler.h++
         src/symplectic_euler.cpp
         include/symplectic_euler.h++
+        src/verlet.cpp
+        include/verlet.h++
 )
 
 
