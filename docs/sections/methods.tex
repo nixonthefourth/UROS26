@@ -1,0 +1,79 @@
+\section{Methods}
+
+This investigation follows a structured methodology designed to minimise bias and maximise the accuracy and
+reproducibility of results.
+Synthetic data are generated using a custom C\texttt{++} simulator across a variable number of timesteps and
+procedurally constructed initial problem configurations.
+
+\subsection{Procedural Generation}
+
+Initial conditions are procedurally generated using a Mersenne--Twister pseudo-random number engine with fixed seed
+parameters to ensure reproducibility.
+Two physical quantities require generation for each system: the mass of the central object and the spatial coordinates
+of the orbiting body.
+
+\paragraph{Central body mass.}
+The stellar mass is sampled uniformly from the range $[1.0,\, 2.4]\,M_\odot$.
+This interval is chosen to restrict the simulation domain to main-sequence stars of spectral classes G through A,
+encompassing objects analogous to the Sun and Vega, respectively.
+This restriction is physically motivated: the gravitational influence of more massive stars (class O or B) would cause
+rapid orbital decay or ejection, while sub-solar-mass stars would introduce qualitatively different dynamical
+regimes outside the scope of this study.
+
+\paragraph{Planetary mass.}
+The mass of each orbiting body is derived from the stellar mass via the fixed ratio
+\begin{equation}
+    m_\mathrm{planet} = \frac{M_\star}{333{,}000},
+\end{equation}
+which approximates the observed mass ratio between Earth and the Sun, providing a physically realistic planetary-mass
+analogue for each generated system.
+
+\paragraph{Orbital coordinates.}
+The initial separation between the central body and the orbiting object is sampled uniformly from the
+range $[1,\, 5]\,\mathrm{AU}$.
+This interval is deliberately chosen to prevent premature convergence in the numerical integrator and to ensure a
+well-conditioned, stable dataset throughout the integration period.
+
+\subsection{Simulation}
+
+Following procedural generation, the derived initial quantities velocity, acceleration, and separation distance
+are computed analytically, alongside baseline stability diagnostics for angular momentum and total energy.
+
+Simulations are executed in parallel across six CPU cores (Apple Silicon M2) with one independent simulation per core.
+Two distinct integration regimes are employed, controlled by both the timestep $\Delta t$ and the total number of steps $N$:
+
+\begin{itemize}
+    \item \textbf{Coarse regime:} $N = 10^5$ steps with $\Delta t = 10^{-2}$, providing a computationally efficient initial pass.
+    \item \textbf{Fine regime:} $N = 10^6$ steps with $\Delta t = 10^{-3}$, applied to an independently generated problem configuration to improve resolution and expose long-term integrator behaviour.
+\end{itemize}
+
+The reduction in $\Delta t$ for the finer regime is deliberate: maintaining the geometric structure of the integration (i.e.\ symplecticity) requires that the product $N \cdot \Delta t$ remains consistent across regimes. This dual-resolution strategy improves the fidelity of the dataset while revealing convergence limitations inherent to specific integrators.
+
+All simulation output is written to individual \texttt{.csv} files.
+Post-processing and visualisation are performed using \texttt{matplotlib} under Python~3.12.
+The following plots are produced for each integrator:
+\begin{enumerate}
+    \item Orbital trajectory in the $xy$-plane.
+    \item Angular momentum as a function of time.
+    \item Total energy as a function of time.
+    \item Relative error in both conserved quantities, aggregated across integrators and plotted against timestep size.
+\end{enumerate}
+
+\subsection{Integrator Derivation}
+
+In line with one of the primary objectives of this research the development and evaluation of novel numerical schemes,
+the best-performing integrator identified among the five candidates will be extended to a higher order via appropriate
+composition or correction methods.
+This derived integrator will then be benchmarked against its lower-order counterpart under identical simulation conditions.
+
+\subsection{Hypothesis}
+
+Drawing on prior analytical work and the existing literature on geometric numerical integration, the primary hypothesis
+is that the \textit{Velocity Verlet} integrator will deliver the most favourable trade-off between computational
+efficiency and energy fidelity.
+This expectation is grounded in two properties of the method: its symplecticity, which guarantees long-term conservation
+of the symplectic structure of Hamiltonian systems, and its second-order accuracy, which provides a sufficient
+resolution for orbital dynamics without the overhead of higher-order schemes.
+
+Integrator performance will be evaluated against three criteria: (i) long-term conservation of total energy, (ii)
+preservation of angular momentum, and (iii) computational cost, measured in wall-clock time per integration step.
