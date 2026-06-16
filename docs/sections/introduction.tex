@@ -8,6 +8,7 @@ This formalism is particularly well-suited to the study of orbital dynamics, as 
 
 We restrict our analysis to classical mechanics as defined by Newton and Kepler, applying the governing equations of the field accordingly.
 A high-performance simulation engine is developed in C++20 to carry out procedurally generated two-body simulations, with the engine exposed to Python 3.12 via a foreign function interface – a common and practical convention in scientific computing workflows.
+To make the resulting dual-resolution study tractable, simulations are distributed across a fixed-size worker pool, with each worker independently generating a problem instance and executing all five candidate integrators under matching initial conditions.
 Simulation data is then analysed in Python to draw conclusions regarding integrator accuracy and computational efficiency.
 
 Having identified the most suitable standard integrator, we subsequently construct a higher-order scheme and repeat the analysis under equivalent conditions.
