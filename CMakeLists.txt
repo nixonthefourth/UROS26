@@ -18,6 +18,9 @@ add_executable(UROS26
         include/integrators/rk4.h++
         src/integrators/leapfrog.cpp
         include/integrators/leapfrog.h++
+        src/procedural_generation.cpp
+        include/procedural_generation.h++
+        include/stellar_object.h++
 )
 
 
