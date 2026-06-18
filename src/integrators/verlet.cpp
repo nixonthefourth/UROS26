@@ -2,29 +2,35 @@
 // Created by Mykyta Khomiakov on 11/06/2026.
 //
 
-#include "symplectic_euler.h++"
+#include "integrators/verlet.h++"
 
-namespace symplectic_euler {
+namespace verlet {
 
-    /// @brief Updates velocity of the orbiting object
-    /// @param cur_velocity Current velocity of the orbiting object
+    /// @brief Updates position of the orbiting object given acceleration
+    /// @param position Current position of the object
+    /// @param velocity Current velocity of the object
+    /// @param acceleration Given acceleration
     /// @param t Timestep
-    /// @param cur_acceleration Current acceleration of the orbiting object
-    /// @return Returns the updated velocity first prior to displacement
-    Vec2 velocity_update(const Vec2& cur_velocity, const float t, const Vec2& cur_acceleration) {
-        return cur_velocity + cur_acceleration * t;
+    /// @return Returns updated position
+    Vec2 update_position(const Vec2& position, const Vec2& velocity, const Vec2& acceleration, const float t) {
+        Vec2 velocity_component = velocity * t;
+        Vec2 acceleration_component = 0.5f * acceleration * (t * t);
+
+        return position + velocity_component + acceleration_component;
     }
 
-    /// @brief Updates the position of the orbiting object
-    /// @param cur_position Current position of the object
+    /// @brief Updates the velocity of the orbiting object
+    /// @param velocity Current velocity of the object
+    /// @param prior_acceleration Prior acceleration
+    /// @param new_acceleration Newly acquired acceleration
     /// @param t Timestep
-    /// @param cur_velocity Current velocity of the orbiting object
-    /// @return Returns updated displacement
-    Vec2 position_update(const Vec2& cur_position, const float t, const Vec2& cur_velocity) {
-        return cur_position + cur_velocity * t;
+    /// @return Returns updated velocity
+    Vec2 update_velocity(const Vec2& velocity, const Vec2& prior_acceleration, const Vec2& new_acceleration,
+                         const float t) {
+        return velocity + 0.5f * (prior_acceleration + new_acceleration) * t;
     }
 
-    /// @brief Runtime of the Symplectic Euler
+    /// @brief Runs Velocity Verlet
     /// @param star_pos Current position of the star
     /// @param planet_pos Current position of the planet
     /// @param star_mass Mass of the Star
@@ -32,31 +38,36 @@ namespace symplectic_euler {
     /// @param t Timestep
     /// @param iterations Number of iterations algorithm should run
     /// @param G Gravitational constant
-    void run_symplectic_euler(const Vec2& star_pos, const Vec2& planet_pos,
+    void run_verlet(const Vec2& star_pos, const Vec2& planet_pos,
                             const float star_mass, const float planet_mass,
                             const float t, const int iterations, const float G) {
 
         // Find initial conditions of the problem
         float distance = physics::find_distance(star_pos, planet_pos);
         float orbital_speed = physics::find_velocity(star_mass, distance, G);
+        Vec2 displacement = planet_pos;
         Vec2 velocity = physics::find_vel_direction(star_pos, planet_pos, distance ,orbital_speed);
         float initial_energy = physics::find_energy_conservation(star_mass, planet_mass, G,
                                                                     distance, velocity);
         float initial_angular_momentum = physics::find_angular_momentum(planet_mass, velocity, planet_pos);
 
         // Runtime
-        for (int i = 0; i < iterations; i++) {
+        for (int i = 0; i <= iterations; i++) {
+
             // Compute acceleration
-            Vec2 acceleration = physics::find_g_acceleration(star_mass, distance, star_pos, planet_pos, G);
+            Vec2 init_acceleration = physics::find_g_acceleration(star_mass, distance, star_pos, displacement, G);
 
-            // Compute velocity
-            Vec2 velocity = velocity_update(velocity, t, acceleration);
+            // Compute new displacement
+            displacement = update_position(displacement, velocity, init_acceleration, t);
 
-            // Compute displacement
-            Vec2 displacement = position_update(planet_pos, t, velocity);
-
-            // Update distance
+            // Compute new distance
             distance = physics::find_distance(star_pos, displacement);
+
+            // Compute new acceleration
+            Vec2 new_acceleration = physics::find_g_acceleration(star_mass, distance, star_pos, displacement, G);
+
+            // Compute new velocity
+            velocity = update_velocity(velocity, init_acceleration, new_acceleration, t);
 
             // Calculate energy conservation and angular momentum
             // Energy
@@ -67,7 +78,6 @@ namespace symplectic_euler {
             // Angular Momentum
             float angular_momentum_conservation = physics::find_angular_momentum(planet_mass, velocity, displacement);
             float angular_error = physics::angular_error(angular_momentum_conservation, initial_angular_momentum);
-
 
         }
     }

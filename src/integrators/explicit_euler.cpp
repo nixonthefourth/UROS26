@@ -2,35 +2,31 @@
 // Created by Mykyta Khomiakov on 11/06/2026.
 //
 
-#include "verlet.h++"
+#include "integrators/explicit_euler.h++"
 
-namespace verlet {
+namespace explicit_euler {
 
-    /// @brief Updates position of the orbiting object given acceleration
-    /// @param position Current position of the object
-    /// @param velocity Current velocity of the object
-    /// @param acceleration Given acceleration
+    /// @brief Updates position in the explicit Euler scheme
+    /// @param cur_position Current position of the orbiting object
+    /// @param cur_velocity Current velocity of the orbiting object
     /// @param t Timestep
-    /// @return Returns updated position
-    Vec2 update_position(const Vec2& position, const Vec2& velocity, const Vec2& acceleration, const float t) {
-        Vec2 velocity_component = velocity * t;
-        Vec2 acceleration_component = 0.5f * (acceleration * pow(t, 2));
-
-        return position + velocity_component + acceleration_component;
+    /// @return Returns the updated position value through the
+    ///         r(n+1) = r(n) + v(n) * t formula
+    Vec2 position_update(const Vec2& cur_position, const Vec2& cur_velocity, const float t) {
+        return cur_position + cur_velocity * t;
     }
 
-    /// @brief Updates the velocity of the orbiting object
-    /// @param velocity Current velocity of the object
-    /// @param prior_acceleration Prior acceleration
-    /// @param new_acceleration Newly acquired acceleration
+    /// @brief Updates current velocity based on the computed acceleration
+    /// @param cur_velocity Current velocity of the orbiting object
     /// @param t Timestep
-    /// @return Returns updated velocity
-    Vec2 update_velocity(const Vec2& velocity, const Vec2& prior_acceleration, const Vec2& new_acceleration,
-                         const float t) {
-        return velocity + 0.5f * (prior_acceleration + new_acceleration) * t;
+    /// @param cur_acceleration Current acceleration of the orbiting object
+    /// @return Returns the updated velocity value based on the following formula:
+    ///         v(n+1) = v(n) + a(n) * t
+    Vec2 velocity_update(const Vec2& cur_velocity, const float t, const Vec2& cur_acceleration) {
+        return cur_velocity + cur_acceleration * t;
     }
 
-    /// @brief Runs Velocity Verlet
+    /// @brief Runs Explicit Euler
     /// @param star_pos Current position of the star
     /// @param planet_pos Current position of the planet
     /// @param star_mass Mass of the Star
@@ -38,13 +34,14 @@ namespace verlet {
     /// @param t Timestep
     /// @param iterations Number of iterations algorithm should run
     /// @param G Gravitational constant
-    void run_verlet(const Vec2& star_pos, const Vec2& planet_pos,
+    void run_explicit_euler(const Vec2& star_pos, const Vec2& planet_pos,
                             const float star_mass, const float planet_mass,
                             const float t, const int iterations, const float G) {
 
         // Find initial conditions of the problem
         float distance = physics::find_distance(star_pos, planet_pos);
         float orbital_speed = physics::find_velocity(star_mass, distance, G);
+        Vec2 displacement = planet_pos;
         Vec2 velocity = physics::find_vel_direction(star_pos, planet_pos, distance ,orbital_speed);
         float initial_energy = physics::find_energy_conservation(star_mass, planet_mass, G,
                                                                     distance, velocity);
@@ -52,23 +49,21 @@ namespace verlet {
 
         // Runtime
         for (int i = 0; i <= iterations; i++) {
-
             // Compute acceleration
-            Vec2 init_acceleration = physics::find_g_acceleration(star_mass, distance, star_pos, planet_pos, G);
+            Vec2 acceleration = physics::find_g_acceleration(star_mass, distance, star_pos,
+                                                            displacement, G);
 
             // Compute new displacement
-            Vec2 displacement = update_position(planet_pos, velocity, init_acceleration, t);
-
-            // Compute new distance
-            distance = physics::find_distance(star_pos, displacement);
-
-            // Compute new acceleration
-            Vec2 new_acceleration = physics::find_g_acceleration(star_mass, distance, star_pos, displacement, G);
+            displacement = position_update(displacement, velocity, t);
 
             // Compute new velocity
-            velocity = update_velocity(velocity, init_acceleration, new_acceleration, t);
+            velocity = velocity_update(velocity, t, acceleration);
 
-            // Calculate energy conservation and angular momentum
+            // Compute new distance for conservation equations
+            distance = physics::find_distance(star_pos, displacement);
+
+            // Calculate conservations and errors
+
             // Energy
             float energy_conservation = physics::find_energy_conservation(star_mass, planet_mass, G,
                                                                           distance, velocity);
@@ -77,7 +72,6 @@ namespace verlet {
             // Angular Momentum
             float angular_momentum_conservation = physics::find_angular_momentum(planet_mass, velocity, displacement);
             float angular_error = physics::angular_error(angular_momentum_conservation, initial_angular_momentum);
-
         }
     }
 }

@@ -18,11 +18,10 @@ namespace explicit_euler {
     Vec2 position_update(const Vec2& cur_position, const Vec2& cur_velocity, float t);
 
     /// @brief Updates current velocity based on the computed acceleration
-    /// @details Notice how velocity updates after position
     /// @param cur_velocity Current velocity of the orbiting object
     /// @param t Timestep
     /// @param cur_acceleration Current acceleration of the orbiting object
-    /// @return Returns the updates velocity value based on the following formula:
+    /// @return Returns the updated velocity value based on the following formula:
     ///         v(n+1) = v(n) + a(n) * t
     Vec2 velocity_update(const Vec2& cur_velocity, float t, const Vec2& cur_acceleration);
 

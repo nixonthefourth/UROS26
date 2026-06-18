@@ -23,7 +23,7 @@ namespace symplectic_euler {
     /// @return Returns updated displacement
     Vec2 position_update(const Vec2& cur_position, float t, const Vec2& cur_velocity);
 
-    /// @brief Runtime of the Symplectic Euler
+    /// @brief Runs Symplectic Euler
     /// @param star_pos Current position of the star
     /// @param planet_pos Current position of the planet
     /// @param star_mass Mass of the Star

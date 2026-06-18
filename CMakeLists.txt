@@ -8,12 +8,16 @@ add_executable(UROS26
         include/Vec2.h++
         src/physics.cpp
         include/physics.h++
-        src/explicit_euler.cpp
-        include/explicit_euler.h++
-        src/symplectic_euler.cpp
-        include/symplectic_euler.h++
-        src/verlet.cpp
-        include/verlet.h++
+        src/integrators/explicit_euler.cpp
+        include/integrators/explicit_euler.h++
+        src/integrators/symplectic_euler.cpp
+        include/integrators/symplectic_euler.h++
+        src/integrators/verlet.cpp
+        include/integrators/verlet.h++
+        src/integrators/rk4.cpp
+        include/integrators/rk4.h++
+        src/integrators/leapfrog.cpp
+        include/integrators/leapfrog.h++
 )
 
 
