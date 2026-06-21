@@ -5,6 +5,7 @@
 #ifndef UROS26_VEC2_H
 #define UROS26_VEC2_H
 #include <iostream>
+#include <stdexcept>
 
 /// @brief Creates a position vector of a stellar object
 /// @param x Horizontal vector component
@@ -49,6 +50,8 @@ struct Vec2 {
         if (scalar != 0.f) {
             return Vec2(x / scalar, y / scalar);
         }
+
+        throw std::invalid_argument("Vec2 division by zero");
     }
 
     /// @brief In-place scalar division.
@@ -61,6 +64,8 @@ struct Vec2 {
             y /= scalar;
             return *this;
         }
+
+        throw std::invalid_argument("Vec2 division by zero");
     }
 
     /// @brief Allows subtraction between two Vec2 structures

@@ -4,6 +4,8 @@
 
 #include "physics.h++"
 
+#include <cmath>
+
 namespace physics {
 
     /// @brief Finds distance between two stellar bodies.

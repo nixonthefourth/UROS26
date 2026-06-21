@@ -61,6 +61,11 @@ effect of step size on integrator accuracy while holding the total integrated ti
 For each simulation run, the raw trajectory is recorded at every timestep, comprising time, position, velocity,
 total energy, angular momentum, and any additional state variables required for downstream diagnostics. Each run
 is written to an individual \texttt{.csv} file, preserving full trajectory resolution for subsequent analysis.
+The summary table of each run will be produced, containing information on the ID of each simulation, angular momentum
+and energy conservation, and compute time for each integrator.
+
+Graph plots of the trajectories will be produced with both timesteps, however the conservation and relative error data
+will be plotted from the summary table.
 
 \paragraph{Summary statistics.}
 For each simulation, the following scalar metrics are computed and appended to a master summary table: runtime,

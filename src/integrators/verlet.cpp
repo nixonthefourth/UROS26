@@ -3,6 +3,7 @@
 //
 
 #include "integrators/verlet.h++"
+#include "integrators/runtime_timer.h++"
 
 namespace verlet {
 
@@ -41,6 +42,7 @@ namespace verlet {
     void run_verlet(const Vec2& star_pos, const Vec2& planet_pos,
                             const float star_mass, const float planet_mass,
                             const float t, const int iterations, const float G) {
+        integrators::RuntimeTimer timer("Velocity Verlet");
 
         // Find initial conditions of the problem
         float distance = physics::find_distance(star_pos, planet_pos);

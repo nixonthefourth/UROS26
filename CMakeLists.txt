@@ -2,9 +2,18 @@ cmake_minimum_required(VERSION 4.2)
 project(UROS26)
 
 set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-add_executable(UROS26
-        src/main.cpp
+find_package(Python COMPONENTS Interpreter Development.Module REQUIRED)
+execute_process(
+        COMMAND "${Python_EXECUTABLE}" -m pybind11 --cmakedir
+        OUTPUT_VARIABLE pybind11_DIR
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_QUIET
+)
+find_package(pybind11 CONFIG REQUIRED)
+
+add_library(UROS26_core
         include/Vec2.h++
         src/physics.cpp
         include/physics.h++
@@ -21,8 +30,15 @@ add_executable(UROS26
         src/procedural_generation.cpp
         include/procedural_generation.h++
         include/stellar_object.h++
+        include/integrators/runtime_timer.h++
 )
 
+set_target_properties(UROS26_core PROPERTIES POSITION_INDEPENDENT_CODE ON)
+target_include_directories(UROS26_core PUBLIC include)
+target_include_directories(UROS26_core PUBLIC src)
 
-target_include_directories(UROS26 PUBLIC include)
-target_include_directories(UROS26 PUBLIC src)
+add_executable(UROS26 src/main.cpp)
+target_link_libraries(UROS26 PRIVATE UROS26_core)
+
+pybind11_add_module(uros26 src/bindings.cpp)
+target_link_libraries(uros26 PRIVATE UROS26_core)

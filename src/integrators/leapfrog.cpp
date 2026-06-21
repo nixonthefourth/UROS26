@@ -3,6 +3,7 @@
 //
 
 #include "integrators/leapfrog.h++"
+#include "integrators/runtime_timer.h++"
 
 namespace leapfrog {
 
@@ -44,6 +45,7 @@ namespace leapfrog {
     void run_leapfrog(const Vec2& star_pos, const Vec2& planet_pos,
                       const float star_mass, const float planet_mass,
                       const float t, const int iterations, const float G) {
+        integrators::RuntimeTimer timer("Leapfrog");
 
         // Find initial conditions of the problem
         float distance = physics::find_distance(star_pos, planet_pos);
