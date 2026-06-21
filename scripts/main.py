@@ -12,6 +12,7 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
+from statistics import median
 from typing import Callable, Iterable
 
 
@@ -92,6 +93,8 @@ def integrator_runner(spec: IntegratorSpec) -> Callable:
 
 
 def plot_orbit(csv_path: Path, plot_path: Path, title: str, samples: int, max_points: int) -> None:
+    configure_matplotlib()
+
     import matplotlib
 
     matplotlib.use("Agg")
@@ -233,7 +236,23 @@ def mean(values: Iterable[float]) -> float:
     return sum(values) / len(values)
 
 
+def log_safe(value: float) -> float:
+    return value if value > 0.0 else 1e-18
+
+
+def configure_matplotlib() -> None:
+    temp_root = Path(os.environ.get("TMPDIR", "/tmp"))
+    matplotlib_cache = temp_root / "uros26_matplotlib"
+    font_cache = temp_root / "uros26_fontconfig"
+    matplotlib_cache.mkdir(parents=True, exist_ok=True)
+    font_cache.mkdir(parents=True, exist_ok=True)
+    os.environ.setdefault("MPLCONFIGDIR", str(matplotlib_cache))
+    os.environ.setdefault("XDG_CACHE_HOME", str(font_cache))
+
+
 def plot_summary_table(summary_path: Path, output_dir: Path) -> None:
+    configure_matplotlib()
+
     import matplotlib
 
     matplotlib.use("Agg")
@@ -258,6 +277,12 @@ def plot_summary_table(summary_path: Path, output_dir: Path) -> None:
     def grouped_maxima(field: str) -> dict[tuple[str, str], float]:
         return {
             key: max(float(row[field]) for row in group)
+            for key, group in grouped.items()
+        }
+
+    def grouped_medians(field: str) -> dict[tuple[str, str], float]:
+        return {
+            key: median(float(row[field]) for row in group)
             for key, group in grouped.items()
         }
 
@@ -289,10 +314,125 @@ def plot_summary_table(summary_path: Path, output_dir: Path) -> None:
         fig.savefig(output_dir / filename)
         plt.close(fig)
 
+    def timestep_plot(filename: str, title: str, ylabel: str, field: str) -> None:
+        fig, ax = plt.subplots(figsize=(8, 5), dpi=160)
+        for integrator in integrator_order:
+            points = []
+            for resolution in resolution_order:
+                key = (integrator, resolution)
+                if key in grouped:
+                    timestep = float(grouped[key][0]["timestep"])
+                    error = mean(float(row[field]) for row in grouped[key])
+                    points.append((timestep, log_safe(error)))
+
+            if points:
+                points.sort()
+                ax.plot(
+                    [point[0] for point in points],
+                    [point[1] for point in points],
+                    marker="o",
+                    linewidth=1.2,
+                    label=integrator,
+                )
+
+        ax.set_title(title)
+        ax.set_xlabel("timestep [yr]")
+        ax.set_ylabel(ylabel)
+        ax.set_xscale("log")
+        ax.set_yscale("log")
+        ax.grid(True, linewidth=0.4, alpha=0.45)
+        ax.legend(loc="best")
+        fig.tight_layout()
+        fig.savefig(output_dir / filename)
+        plt.close(fig)
+
+    def boxplot(filename: str, title: str, ylabel: str, field: str) -> None:
+        fig, ax = plt.subplots(figsize=(11, 5), dpi=160)
+        labels: list[str] = []
+        values: list[list[float]] = []
+
+        for integrator in integrator_order:
+            for resolution in resolution_order:
+                group = grouped.get((integrator, resolution), [])
+                if not group:
+                    continue
+                labels.append(f"{integrator}\n{resolution.replace('_', '=')}")
+                values.append([log_safe(float(row[field])) for row in group])
+
+        ax.boxplot(values, labels=labels, showfliers=False)
+        ax.set_title(title)
+        ax.set_ylabel(ylabel)
+        ax.set_yscale("log")
+        ax.grid(axis="y", linewidth=0.4, alpha=0.45)
+        ax.tick_params(axis="x", labelrotation=35)
+        fig.tight_layout()
+        fig.savefig(output_dir / filename)
+        plt.close(fig)
+
+    def plot_trajectory_stat(
+        filename: str,
+        title: str,
+        ylabel: str,
+        field: str,
+        reducer: Callable[[Iterable[float]], float],
+        max_points: int = 1_200,
+    ) -> None:
+        fig, ax = plt.subplots(figsize=(10, 5), dpi=160)
+
+        for resolution in resolution_order:
+            for integrator in integrator_order:
+                group = grouped.get((integrator, resolution), [])
+                if not group:
+                    continue
+
+                samples = max(1, int(group[0]["iterations"]) + 1)
+                stride = max(1, samples // max_points)
+                times_by_index: dict[int, list[float]] = {}
+                values_by_index: dict[int, list[float]] = {}
+
+                for row in group:
+                    csv_path = Path(row["trajectory_csv"])
+                    if not csv_path.exists():
+                        continue
+
+                    with csv_path.open(newline="") as trajectory_file:
+                        reader = csv.DictReader(trajectory_file)
+                        for trajectory_row in reader:
+                            step = int(trajectory_row["step"])
+                            if step % stride != 0 and step != samples - 1:
+                                continue
+
+                            index = step // stride
+                            times_by_index.setdefault(index, []).append(float(trajectory_row["time"]))
+                            values_by_index.setdefault(index, []).append(log_safe(float(trajectory_row[field])))
+
+                if not values_by_index:
+                    continue
+
+                indices = sorted(values_by_index)
+                ax.plot(
+                    [mean(times_by_index[index]) for index in indices],
+                    [reducer(values_by_index[index]) for index in indices],
+                    linewidth=1.0,
+                    label=f"{integrator}, {resolution.replace('_', '=')}",
+                )
+
+        ax.set_title(title)
+        ax.set_xlabel("time [yr]")
+        ax.set_ylabel(ylabel)
+        ax.set_yscale("log")
+        ax.grid(True, linewidth=0.4, alpha=0.45)
+        ax.legend(loc="best", fontsize=8)
+        fig.tight_layout()
+        fig.savefig(output_dir / filename)
+        plt.close(fig)
+
     runtime_mean = grouped_means("compute_time_seconds")
     energy_error_mean = grouped_means("mean_energy_relative_error")
+    energy_error_median = grouped_medians("median_energy_relative_error")
     energy_error_max = grouped_maxima("max_energy_relative_error")
     angular_error_mean = grouped_means("mean_angular_momentum_relative_error")
+    angular_error_median = grouped_medians("median_angular_momentum_relative_error")
     angular_error_max = grouped_maxima("max_angular_momentum_relative_error")
     energy_mean = grouped_means("mean_energy")
     angular_momentum_mean = grouped_means("mean_angular_momentum")
@@ -309,6 +449,26 @@ def plot_summary_table(summary_path: Path, output_dir: Path) -> None:
     bar_plot("mean_energy.png", "Mean Energy Conservation", "energy", energy_mean)
     bar_plot("mean_angular_momentum.png", "Mean Angular Momentum Conservation", "angular momentum",
              angular_momentum_mean)
+    bar_plot("median_relative_energy_error.png", "Median Relative Energy Error", "relative error",
+             energy_error_median, log_scale=True)
+    bar_plot("median_relative_angular_momentum_error.png", "Median Relative Angular Momentum Error",
+             "relative error", angular_error_median, log_scale=True)
+    timestep_plot("energy_error_vs_timestep.png", "Relative Energy Error vs Timestep",
+                  "mean relative energy error", "mean_energy_relative_error")
+    timestep_plot("angular_momentum_error_vs_timestep.png", "Angular Momentum Error vs Timestep",
+                  "mean relative angular momentum error", "mean_angular_momentum_relative_error")
+    boxplot("energy_error_boxplot.png", "Distribution of Relative Energy Errors",
+            "mean relative energy error", "mean_energy_relative_error")
+    plot_trajectory_stat("relative_energy_error_over_time.png", "Mean Relative Energy Error Over Time",
+                         "relative energy error", "energy_relative_error", mean)
+    plot_trajectory_stat("angular_momentum_error_over_time.png", "Mean Angular Momentum Error Over Time",
+                         "relative angular momentum error", "angular_momentum_relative_error", mean)
+    plot_trajectory_stat("median_relative_energy_error_over_time.png",
+                         "Median Relative Energy Error Over Time", "relative energy error",
+                         "energy_relative_error", median)
+    plot_trajectory_stat("median_angular_momentum_error_over_time.png",
+                         "Median Angular Momentum Error Over Time", "relative angular momentum error",
+                         "angular_momentum_relative_error", median)
 
     fig, ax = plt.subplots(figsize=(8, 5), dpi=160)
     for resolution in resolution_order:

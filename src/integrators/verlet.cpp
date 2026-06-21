@@ -51,7 +51,7 @@ namespace verlet {
         Vec2 velocity = physics::find_vel_direction(star_pos, planet_pos, distance ,orbital_speed);
         float initial_energy = physics::find_energy_conservation(star_mass, planet_mass, G,
                                                                     distance, velocity);
-        float initial_angular_momentum = physics::find_angular_momentum(planet_mass, velocity, planet_pos);
+        float initial_angular_momentum = physics::find_angular_momentum(planet_mass, velocity, planet_pos - star_pos);
         integrators::RunRegistry registry(output_csv);
         registry.record(0, 0.0, displacement, velocity, distance, initial_energy, initial_angular_momentum, 0.0, 0.0);
 
@@ -81,7 +81,8 @@ namespace verlet {
             float energy_error = physics::energy_error(energy_conservation, initial_energy);
 
             // Angular Momentum
-            float angular_momentum_conservation = physics::find_angular_momentum(planet_mass, velocity, displacement);
+            float angular_momentum_conservation = physics::find_angular_momentum(planet_mass, velocity,
+                                                                                 displacement - star_pos);
             float angular_error = physics::angular_error(angular_momentum_conservation, initial_angular_momentum);
             registry.record(i, i * t, displacement, velocity, distance, energy_conservation,
                             angular_momentum_conservation, energy_error, angular_error);
