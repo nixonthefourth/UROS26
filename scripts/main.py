@@ -1,5 +1,18 @@
-from pathlib import Path
+# Runtime command: python3 scripts/main.py --output-root /Volumes/Maxtor --problem-count 200 --workers 4
+# Use your volume name
+
+from __future__ import annotations
+
+import argparse
+import csv
+import math
+import os
 import sys
+from concurrent.futures import ProcessPoolExecutor, as_completed
+from dataclasses import dataclass
+from datetime import datetime
+from pathlib import Path
+from typing import Callable, Iterable
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -8,5 +21,400 @@ BUILD_DIR = REPO_ROOT / "build"
 if BUILD_DIR.exists():
     sys.path.insert(0, str(BUILD_DIR))
 
-from uros26 import *
+from uros26 import Vec2, generate, integrators  # noqa: E402
 
+
+G_AU_SOLAR_YEAR = 4.0 * math.pi * math.pi
+DEFAULT_PROBLEM_COUNT = 20
+DEFAULT_WORKERS = 4
+RESOLUTIONS = (
+    ("dt_1e-2", 1e-2, 100_000),
+    ("dt_1e-3", 1e-3, 1_000_000),
+)
+
+
+@dataclass(frozen=True)
+class IntegratorSpec:
+    folder: str
+    label: str
+    runner_name: str
+
+
+INTEGRATORS = (
+    IntegratorSpec("explicit_euler", "Explicit Euler", "run_explicit_euler"),
+    IntegratorSpec("symplectic_euler", "Symplectic Euler", "run_symplectic_euler"),
+    IntegratorSpec("leapfrog", "Leapfrog", "run_leapfrog"),
+    IntegratorSpec("verlet", "Velocity Verlet", "run_verlet"),
+    IntegratorSpec("rk4", "RK4", "run_rk4"),
+)
+
+
+SUMMARY_FIELDS = (
+    "simulation_id",
+    "problem_id",
+    "integrator",
+    "resolution",
+    "timestep",
+    "iterations",
+    "star_mass",
+    "planet_mass",
+    "star_x",
+    "star_y",
+    "planet_x",
+    "planet_y",
+    "final_energy_relative_error",
+    "final_angular_momentum_relative_error",
+    "mean_energy",
+    "median_energy",
+    "min_energy",
+    "max_energy",
+    "mean_angular_momentum",
+    "median_angular_momentum",
+    "min_angular_momentum",
+    "max_angular_momentum",
+    "mean_energy_relative_error",
+    "median_energy_relative_error",
+    "min_energy_relative_error",
+    "max_energy_relative_error",
+    "mean_angular_momentum_relative_error",
+    "median_angular_momentum_relative_error",
+    "min_angular_momentum_relative_error",
+    "max_angular_momentum_relative_error",
+    "compute_time_seconds",
+    "trajectory_csv",
+    "orbit_plot",
+)
+
+
+def integrator_runner(spec: IntegratorSpec) -> Callable:
+    module = getattr(integrators, spec.folder)
+    return getattr(module, spec.runner_name)
+
+
+def plot_orbit(csv_path: Path, plot_path: Path, title: str, samples: int, max_points: int) -> None:
+    import matplotlib
+
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    stride = max(1, samples // max_points)
+    x_values: list[float] = []
+    y_values: list[float] = []
+
+    with csv_path.open(newline="") as csv_file:
+        reader = csv.DictReader(csv_file)
+        for row in reader:
+            step = int(row["step"])
+            if step % stride == 0 or step == samples - 1:
+                x_values.append(float(row["position_x"]))
+                y_values.append(float(row["position_y"]))
+
+    fig, ax = plt.subplots(figsize=(7, 7), dpi=160)
+    ax.plot(x_values, y_values, linewidth=0.8)
+    ax.scatter([0.0], [0.0], s=32, marker="*", label="Central body")
+    ax.set_aspect("equal", adjustable="box")
+    ax.set_xlabel("x [AU]")
+    ax.set_ylabel("y [AU]")
+    ax.set_title(title)
+    ax.grid(True, linewidth=0.4, alpha=0.45)
+    ax.legend(loc="best")
+    fig.tight_layout()
+    fig.savefig(plot_path)
+    plt.close(fig)
+
+
+def summary_to_row(summary, metadata: dict[str, object]) -> dict[str, object]:
+    return {
+        **metadata,
+        "final_energy_relative_error": summary.final_energy_relative_error,
+        "final_angular_momentum_relative_error": summary.final_angular_momentum_relative_error,
+        "mean_energy": summary.mean_energy,
+        "median_energy": summary.median_energy,
+        "min_energy": summary.min_energy,
+        "max_energy": summary.max_energy,
+        "mean_angular_momentum": summary.mean_angular_momentum,
+        "median_angular_momentum": summary.median_angular_momentum,
+        "min_angular_momentum": summary.min_angular_momentum,
+        "max_angular_momentum": summary.max_angular_momentum,
+        "mean_energy_relative_error": summary.mean_energy_relative_error,
+        "median_energy_relative_error": summary.median_energy_relative_error,
+        "min_energy_relative_error": summary.min_energy_relative_error,
+        "max_energy_relative_error": summary.max_energy_relative_error,
+        "mean_angular_momentum_relative_error": summary.mean_angular_momentum_relative_error,
+        "median_angular_momentum_relative_error": summary.median_angular_momentum_relative_error,
+        "min_angular_momentum_relative_error": summary.min_angular_momentum_relative_error,
+        "max_angular_momentum_relative_error": summary.max_angular_momentum_relative_error,
+        "compute_time_seconds": summary.compute_time_seconds,
+    }
+
+
+def run_problem(
+    problem_id: int,
+    output_root: str,
+    seed_base: int,
+    max_plot_points: int,
+    gravitational_constant: float,
+) -> list[dict[str, object]]:
+    problem = generate.problem_setup(seed_base + problem_id)
+    rows: list[dict[str, object]] = []
+
+    for spec in INTEGRATORS:
+        runner = integrator_runner(spec)
+
+        for resolution_name, timestep, iterations in RESOLUTIONS:
+            simulation_id = f"sim_{problem_id:04d}_{spec.folder}_{resolution_name}"
+            run_dir = Path(output_root) / spec.folder / f"sim_{problem_id:04d}" / resolution_name
+            run_dir.mkdir(parents=True, exist_ok=True)
+
+            trajectory_csv = run_dir / "trajectory.csv"
+            orbit_plot = run_dir / "orbit.png"
+
+            summary = runner(
+                problem.star_pos,
+                problem.planet_pos,
+                problem.star_mass,
+                problem.planet_mass,
+                timestep,
+                iterations,
+                gravitational_constant,
+                str(trajectory_csv),
+            )
+
+            plot_orbit(
+                trajectory_csv,
+                orbit_plot,
+                f"{spec.label} | sim {problem_id:04d} | dt={timestep:g}",
+                summary.samples,
+                max_plot_points,
+            )
+
+            rows.append(
+                summary_to_row(
+                    summary,
+                    {
+                        "simulation_id": simulation_id,
+                        "problem_id": problem_id,
+                        "integrator": spec.label,
+                        "resolution": resolution_name,
+                        "timestep": timestep,
+                        "iterations": iterations,
+                        "star_mass": problem.star_mass,
+                        "planet_mass": problem.planet_mass,
+                        "star_x": problem.star_pos.x,
+                        "star_y": problem.star_pos.y,
+                        "planet_x": problem.planet_pos.x,
+                        "planet_y": problem.planet_pos.y,
+                        "trajectory_csv": str(trajectory_csv),
+                        "orbit_plot": str(orbit_plot),
+                    },
+                )
+            )
+
+    return rows
+
+
+def write_summary(summary_path: Path, rows: list[dict[str, object]]) -> None:
+    with summary_path.open("w", newline="") as csv_file:
+        writer = csv.DictWriter(csv_file, fieldnames=SUMMARY_FIELDS)
+        writer.writeheader()
+        writer.writerows(rows)
+
+
+def read_summary(summary_path: Path) -> list[dict[str, str]]:
+    with summary_path.open(newline="") as csv_file:
+        return list(csv.DictReader(csv_file))
+
+
+def mean(values: Iterable[float]) -> float:
+    values = list(values)
+    if not values:
+        return 0.0
+
+    return sum(values) / len(values)
+
+
+def plot_summary_table(summary_path: Path, output_dir: Path) -> None:
+    import matplotlib
+
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    rows = read_summary(summary_path)
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    integrator_order = [spec.label for spec in INTEGRATORS]
+    resolution_order = [resolution[0] for resolution in RESOLUTIONS]
+
+    grouped: dict[tuple[str, str], list[dict[str, str]]] = {}
+    for row in rows:
+        grouped.setdefault((row["integrator"], row["resolution"]), []).append(row)
+
+    def grouped_means(field: str) -> dict[tuple[str, str], float]:
+        return {
+            key: mean(float(row[field]) for row in group)
+            for key, group in grouped.items()
+        }
+
+    def grouped_maxima(field: str) -> dict[tuple[str, str], float]:
+        return {
+            key: max(float(row[field]) for row in group)
+            for key, group in grouped.items()
+        }
+
+    def bar_plot(filename: str, title: str, ylabel: str, values: dict[tuple[str, str], float],
+                 log_scale: bool = False) -> None:
+        x_positions = list(range(len(integrator_order)))
+        width = 0.36
+        offsets = (-width / 2, width / 2)
+
+        fig, ax = plt.subplots(figsize=(10, 5), dpi=160)
+        for resolution, offset in zip(resolution_order, offsets):
+            heights = [values.get((integrator, resolution), 0.0) for integrator in integrator_order]
+            ax.bar(
+                [x + offset for x in x_positions],
+                heights,
+                width,
+                label=resolution.replace("_", "="),
+            )
+
+        ax.set_title(title)
+        ax.set_ylabel(ylabel)
+        ax.set_xticks(x_positions)
+        ax.set_xticklabels(integrator_order, rotation=20, ha="right")
+        ax.grid(axis="y", linewidth=0.4, alpha=0.45)
+        ax.legend(title="Resolution")
+        if log_scale:
+            ax.set_yscale("log")
+        fig.tight_layout()
+        fig.savefig(output_dir / filename)
+        plt.close(fig)
+
+    runtime_mean = grouped_means("compute_time_seconds")
+    energy_error_mean = grouped_means("mean_energy_relative_error")
+    energy_error_max = grouped_maxima("max_energy_relative_error")
+    angular_error_mean = grouped_means("mean_angular_momentum_relative_error")
+    angular_error_max = grouped_maxima("max_angular_momentum_relative_error")
+    energy_mean = grouped_means("mean_energy")
+    angular_momentum_mean = grouped_means("mean_angular_momentum")
+
+    bar_plot("average_runtime_seconds.png", "Average Runtime", "seconds", runtime_mean)
+    bar_plot("mean_relative_energy_error.png", "Mean Relative Energy Error", "relative error",
+             energy_error_mean, log_scale=True)
+    bar_plot("max_relative_energy_error.png", "Maximum Relative Energy Error", "relative error",
+             energy_error_max, log_scale=True)
+    bar_plot("mean_relative_angular_momentum_error.png", "Mean Relative Angular Momentum Error", "relative error",
+             angular_error_mean, log_scale=True)
+    bar_plot("max_relative_angular_momentum_error.png", "Maximum Relative Angular Momentum Error", "relative error",
+             angular_error_max, log_scale=True)
+    bar_plot("mean_energy.png", "Mean Energy Conservation", "energy", energy_mean)
+    bar_plot("mean_angular_momentum.png", "Mean Angular Momentum Conservation", "angular momentum",
+             angular_momentum_mean)
+
+    fig, ax = plt.subplots(figsize=(8, 5), dpi=160)
+    for resolution in resolution_order:
+        x_values = []
+        y_values = []
+        labels = []
+        for integrator in integrator_order:
+            key = (integrator, resolution)
+            if key in runtime_mean and key in energy_error_max:
+                x_values.append(runtime_mean[key])
+                y_values.append(energy_error_max[key])
+                labels.append(integrator)
+
+        ax.scatter(x_values, y_values, label=resolution.replace("_", "="), s=48)
+        for x_value, y_value, label in zip(x_values, y_values, labels):
+            ax.annotate(label, (x_value, y_value), fontsize=8, xytext=(4, 4), textcoords="offset points")
+
+    ax.set_title("Accuracy vs Runtime")
+    ax.set_xlabel("average runtime [seconds]")
+    ax.set_ylabel("maximum relative energy error")
+    ax.set_yscale("log")
+    ax.grid(True, linewidth=0.4, alpha=0.45)
+    ax.legend(title="Resolution")
+    fig.tight_layout()
+    fig.savefig(output_dir / "accuracy_vs_runtime.png")
+    plt.close(fig)
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Run the UROS26 parallel orbital simulation campaign."
+    )
+    parser.add_argument(
+        "--output-root",
+        type=Path,
+        default=os.environ.get("UROS26_OUTPUT_ROOT"),
+        help="External-drive directory where the timestamped run folder will be created.",
+    )
+    parser.add_argument("--problem-count", type=int, default=DEFAULT_PROBLEM_COUNT)
+    parser.add_argument("--workers", type=int, default=DEFAULT_WORKERS)
+    parser.add_argument("--seed-base", type=int, default=26_000)
+    parser.add_argument("--max-plot-points", type=int, default=5_000)
+    parser.add_argument("--G", type=float, default=G_AU_SOLAR_YEAR)
+    parser.add_argument(
+        "--run-name",
+        default=f"uros26_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
+        help="Name of the run folder created under --output-root.",
+    )
+    parser.add_argument(
+        "--plot-summary-only",
+        type=Path,
+        help="Generate summary plots from an existing summary.csv without rerunning simulations.",
+    )
+
+    args = parser.parse_args()
+    if args.plot_summary_only is None and args.output_root is None:
+        parser.error("--output-root is required unless --plot-summary-only is used")
+
+    return args
+
+
+def main() -> None:
+    args = parse_args()
+
+    if args.plot_summary_only is not None:
+        summary_path = Path(args.plot_summary_only).expanduser().resolve()
+        plot_dir = summary_path.parent / "summary_plots"
+        plot_summary_table(summary_path, plot_dir)
+        print(f"Summary plots written to {plot_dir}")
+        return
+
+    output_root = Path(args.output_root).expanduser().resolve()
+    run_root = output_root / args.run_name
+    run_root.mkdir(parents=True, exist_ok=False)
+
+    expected_rows = args.problem_count * len(INTEGRATORS) * len(RESOLUTIONS)
+    print(f"Writing simulation campaign to {run_root}")
+    print(f"Expected summary rows: {expected_rows}")
+    print(f"Worker processes: {args.workers}")
+
+    rows: list[dict[str, object]] = []
+    with ProcessPoolExecutor(max_workers=args.workers) as executor:
+        futures = [
+            executor.submit(
+                run_problem,
+                problem_id,
+                str(run_root),
+                args.seed_base,
+                args.max_plot_points,
+                args.G,
+            )
+            for problem_id in range(args.problem_count)
+        ]
+
+        for completed, future in enumerate(as_completed(futures), start=1):
+            rows.extend(future.result())
+            print(f"Completed problem {completed}/{args.problem_count}")
+
+    rows.sort(key=lambda row: (int(row["problem_id"]), str(row["integrator"]), str(row["resolution"])))
+    summary_path = run_root / "summary.csv"
+    write_summary(summary_path, rows)
+    print(f"Summary written to {summary_path}")
+    plot_dir = run_root / "summary_plots"
+    plot_summary_table(summary_path, plot_dir)
+    print(f"Summary plots written to {plot_dir}")
+
+
+if __name__ == "__main__":
+    main()

@@ -27,6 +27,8 @@ add_library(UROS26_core
         include/integrators/rk4.h++
         src/integrators/leapfrog.cpp
         include/integrators/leapfrog.h++
+        src/integrators/run_registry.cpp
+        include/integrators/run_registry.h++
         src/procedural_generation.cpp
         include/procedural_generation.h++
         include/stellar_object.h++
@@ -37,8 +39,9 @@ set_target_properties(UROS26_core PROPERTIES POSITION_INDEPENDENT_CODE ON)
 target_include_directories(UROS26_core PUBLIC include)
 target_include_directories(UROS26_core PUBLIC src)
 
-add_executable(UROS26 src/main.cpp)
-target_link_libraries(UROS26 PRIVATE UROS26_core)
+add_executable(uros26_cli src/main.cpp)
+set_target_properties(uros26_cli PROPERTIES OUTPUT_NAME UROS26)
+target_link_libraries(uros26_cli PRIVATE UROS26_core)
 
 pybind11_add_module(uros26 src/bindings.cpp)
 target_link_libraries(uros26 PRIVATE UROS26_core)

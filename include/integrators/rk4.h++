@@ -6,7 +6,9 @@
 #define UROS26_RK4_H
 
 #include "Vec2.h++"
+#include "integrators/run_registry.h++"
 #include "physics.h++"
+#include <string>
 
 namespace rk4 {
 
@@ -48,9 +50,10 @@ namespace rk4 {
     /// @param t Timestep
     /// @param iterations Number of iterations algorithm should run
     /// @param G Gravitational constant
-    void run_rk4(const Vec2& star_pos, const Vec2& planet_pos,
-                 float star_mass, float planet_mass,
-                 float t, int iterations, float G);
+    integrators::RunSummary run_rk4(const Vec2& star_pos, const Vec2& planet_pos,
+                                    float star_mass, float planet_mass,
+                                    float t, int iterations, float G,
+                                    const std::string& output_csv = "");
 }
 
 #endif //UROS26_RK4_H

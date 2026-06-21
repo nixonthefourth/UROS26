@@ -31,4 +31,18 @@ namespace generate {
 
         return {x_distribution(gen), y_distribution(gen)};
     }
+
+    ProblemSetup problem_setup(const unsigned int seed) {
+        std::mt19937 gen(seed);
+        std::uniform_real_distribution<float> stellar_mass_distribution(1.f, 2.4f);
+        std::uniform_real_distribution<float> separation_distribution(1.f, 5.f);
+
+        const float star_mass = stellar_mass_distribution(gen);
+        return {
+            star_mass,
+            planetary_mass(star_mass),
+            Vec2(0.f, 0.f),
+            Vec2(separation_distribution(gen), separation_distribution(gen))
+        };
+    }
 }
