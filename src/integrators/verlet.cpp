@@ -16,7 +16,7 @@ namespace verlet {
     /// @return Returns updated position
     Vec2 update_position(const Vec2& position, const Vec2& velocity, const Vec2& acceleration, const double t) {
         Vec2 velocity_component = velocity * t;
-        Vec2 acceleration_component = 0.5f * acceleration * (t * t);
+        Vec2 acceleration_component = 0.5 * acceleration * (t * t);
 
         return position + velocity_component + acceleration_component;
     }
@@ -29,7 +29,7 @@ namespace verlet {
     /// @return Returns updated velocity
     Vec2 update_velocity(const Vec2& velocity, const Vec2& prior_acceleration, const Vec2& new_acceleration,
                          const double t) {
-        return velocity + 0.5f * (prior_acceleration + new_acceleration) * t;
+        return velocity + 0.5 * (prior_acceleration + new_acceleration) * t;
     }
 
     /// @brief Runs Velocity Verlet
