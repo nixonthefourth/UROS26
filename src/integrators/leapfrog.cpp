@@ -14,7 +14,7 @@ namespace leapfrog {
     /// @param t Timestep
     /// @return Returns the half-step velocity value
     Vec2 half_velocity_update(const Vec2& velocity, const Vec2& acceleration, const double t) {
-        return velocity + acceleration * (0.5f * t);
+        return velocity + acceleration * (0.5 * t);
     }
 
     /// @brief Updates position in the leapfrog scheme
@@ -32,7 +32,7 @@ namespace leapfrog {
     /// @param t Timestep
     /// @return Returns the full-step velocity value
     Vec2 velocity_update(const Vec2& half_velocity, const Vec2& acceleration, const double t) {
-        return half_velocity + acceleration * (0.5f * t);
+        return half_velocity + acceleration * (0.5 * t);
     }
 
     /// @brief Runs Leapfrog

@@ -33,15 +33,15 @@ namespace rk4 {
         Vec2 k1_position = cur_velocity;
         Vec2 k1_velocity = acceleration_update(star_pos, cur_position, star_mass, G);
 
-        Vec2 k2_position = cur_velocity + 0.5f * t * k1_velocity;
-        Vec2 k2_velocity = acceleration_update(star_pos, cur_position + 0.5f * t * k1_position, star_mass, G);
+        Vec2 k2_position = cur_velocity + 0.5 * t * k1_velocity;
+        Vec2 k2_velocity = acceleration_update(star_pos, cur_position + 0.5 * t * k1_position, star_mass, G);
 
-        Vec2 k3_position = cur_velocity + 0.5f * t * k2_velocity;
-        Vec2 k3_velocity = acceleration_update(star_pos, cur_position + 0.5f * t * k2_position, star_mass, G);
+        Vec2 k3_position = cur_velocity + 0.5 * t * k2_velocity;
+        Vec2 k3_velocity = acceleration_update(star_pos, cur_position + 0.5 * t * k2_position, star_mass, G);
 
         Vec2 k4_position = cur_velocity + t * k3_velocity;
 
-        return cur_position + (t / 6.0f) * (k1_position + 2.0f * k2_position + 2.0f * k3_position + k4_position);
+        return cur_position + (t / 6.0) * (k1_position + 2.0 * k2_position + 2.0 * k3_position + k4_position);
     }
 
     /// @brief Updates velocity in the RK4 scheme
@@ -57,15 +57,15 @@ namespace rk4 {
         Vec2 k1_position = cur_velocity;
         Vec2 k1_velocity = acceleration_update(star_pos, cur_position, star_mass, G);
 
-        Vec2 k2_position = cur_velocity + 0.5f * t * k1_velocity;
-        Vec2 k2_velocity = acceleration_update(star_pos, cur_position + 0.5f * t * k1_position, star_mass, G);
+        Vec2 k2_position = cur_velocity + 0.5 * t * k1_velocity;
+        Vec2 k2_velocity = acceleration_update(star_pos, cur_position + 0.5 * t * k1_position, star_mass, G);
 
-        Vec2 k3_position = cur_velocity + 0.5f * t * k2_velocity;
-        Vec2 k3_velocity = acceleration_update(star_pos, cur_position + 0.5f * t * k2_position, star_mass, G);
+        Vec2 k3_position = cur_velocity + 0.5 * t * k2_velocity;
+        Vec2 k3_velocity = acceleration_update(star_pos, cur_position + 0.5 * t * k2_position, star_mass, G);
 
         Vec2 k4_velocity = acceleration_update(star_pos, cur_position + t * k3_position, star_mass, G);
 
-        return cur_velocity + (t / 6.0f) * (k1_velocity + 2.0f * k2_velocity + 2.0f * k3_velocity + k4_velocity);
+        return cur_velocity + (t / 6.0) * (k1_velocity + 2.0 * k2_velocity + 2.0 * k3_velocity + k4_velocity);
     }
 
     /// @brief Runs RK4
