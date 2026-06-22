@@ -18,15 +18,15 @@ PYBIND11_MODULE(uros26, m) {
 
     py::class_<Vec2>(m, "Vec2")
         .def(py::init<>())
-        .def(py::init<float, float>(), py::arg("x"), py::arg("y"))
+        .def(py::init<double, double>(), py::arg("x"), py::arg("y"))
         .def_readwrite("x", &Vec2::x)
         .def_readwrite("y", &Vec2::y)
         .def("perpendicular", &Vec2::perpendicular)
         .def(py::self + py::self)
         .def(py::self - py::self)
-        .def(py::self * float())
-        .def(float() * py::self)
-        .def(py::self / float())
+        .def(py::self * double())
+        .def(double() * py::self)
+        .def(py::self / double())
         .def("__repr__", [](const Vec2& v) {
             return "Vec2(" + std::to_string(v.x) + ", " + std::to_string(v.y) + ")";
         });

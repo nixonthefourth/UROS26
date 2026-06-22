@@ -13,7 +13,7 @@ namespace leapfrog {
     /// @param acceleration Current acceleration of the orbiting object
     /// @param t Timestep
     /// @return Returns the half-step velocity value
-    Vec2 half_velocity_update(const Vec2& velocity, const Vec2& acceleration, const float t) {
+    Vec2 half_velocity_update(const Vec2& velocity, const Vec2& acceleration, const double t) {
         return velocity + acceleration * (0.5f * t);
     }
 
@@ -22,7 +22,7 @@ namespace leapfrog {
     /// @param half_velocity Current half-step velocity of the orbiting object
     /// @param t Timestep
     /// @return Returns updated displacement
-    Vec2 position_update(const Vec2& position, const Vec2& half_velocity, const float t) {
+    Vec2 position_update(const Vec2& position, const Vec2& half_velocity, const double t) {
         return position + half_velocity * t;
     }
 
@@ -31,7 +31,7 @@ namespace leapfrog {
     /// @param acceleration Newly acquired acceleration
     /// @param t Timestep
     /// @return Returns the full-step velocity value
-    Vec2 velocity_update(const Vec2& half_velocity, const Vec2& acceleration, const float t) {
+    Vec2 velocity_update(const Vec2& half_velocity, const Vec2& acceleration, const double t) {
         return half_velocity + acceleration * (0.5f * t);
     }
 
@@ -44,17 +44,17 @@ namespace leapfrog {
     /// @param iterations Number of iterations algorithm should run
     /// @param G Gravitational constant
     integrators::RunSummary run_leapfrog(const Vec2& star_pos, const Vec2& planet_pos,
-                                         const float star_mass, const float planet_mass,
-                                         const float t, const int iterations, const float G,
+                                         const double star_mass, const double planet_mass,
+                                         const double t, const int iterations, const double G,
                                          const std::string& output_csv) {
         // Find initial conditions of the problem
-        float distance = physics::find_distance(star_pos, planet_pos);
-        float orbital_speed = physics::find_velocity(star_mass, distance, G);
+        double distance = physics::find_distance(star_pos, planet_pos);
+        double orbital_speed = physics::find_velocity(star_mass, distance, G);
         Vec2 displacement = planet_pos;
         Vec2 velocity = physics::find_vel_direction(star_pos, planet_pos, distance ,orbital_speed);
-        float initial_energy = physics::find_energy_conservation(star_mass, planet_mass, G,
+        double initial_energy = physics::find_energy_conservation(star_mass, planet_mass, G,
                                                                     distance, velocity);
-        float initial_angular_momentum = physics::find_angular_momentum(planet_mass, velocity, planet_pos - star_pos);
+        double initial_angular_momentum = physics::find_angular_momentum(planet_mass, velocity, planet_pos - star_pos);
         integrators::RunRegistry registry(output_csv);
         registry.record(0, 0.0, displacement, velocity, distance, initial_energy, initial_angular_momentum, 0.0, 0.0);
 
@@ -81,14 +81,14 @@ namespace leapfrog {
 
             // Calculate energy conservation and angular momentum
             // Energy
-            float energy_conservation = physics::find_energy_conservation(star_mass, planet_mass, G,
+            double energy_conservation = physics::find_energy_conservation(star_mass, planet_mass, G,
                                                                           distance, velocity);
-            float energy_error = physics::energy_error(energy_conservation, initial_energy);
+            double energy_error = physics::energy_error(energy_conservation, initial_energy);
 
             // Angular Momentum
-            float angular_momentum_conservation = physics::find_angular_momentum(planet_mass, velocity,
+            double angular_momentum_conservation = physics::find_angular_momentum(planet_mass, velocity,
                                                                                  displacement - star_pos);
-            float angular_error = physics::angular_error(angular_momentum_conservation, initial_angular_momentum);
+            double angular_error = physics::angular_error(angular_momentum_conservation, initial_angular_momentum);
             registry.record(i, i * t, displacement, velocity, distance, energy_conservation,
                             angular_momentum_conservation, energy_error, angular_error);
         }

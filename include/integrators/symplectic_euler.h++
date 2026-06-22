@@ -16,14 +16,14 @@ namespace symplectic_euler {
     /// @param t Timestep
     /// @param cur_acceleration Current acceleration of the orbiting object
     /// @return Returns the updated velocity first prior to displacement
-    Vec2 velocity_update(const Vec2& cur_velocity, float t, const Vec2& cur_acceleration);
+    Vec2 velocity_update(const Vec2& cur_velocity, double t, const Vec2& cur_acceleration);
 
     /// @brief Updates the position of the orbiting object
     /// @param cur_position Current position of the object
     /// @param t Timestep
     /// @param cur_velocity Current velocity of the orbiting object
     /// @return Returns updated displacement
-    Vec2 position_update(const Vec2& cur_position, float t, const Vec2& cur_velocity);
+    Vec2 position_update(const Vec2& cur_position, double t, const Vec2& cur_velocity);
 
     /// @brief Runs Symplectic Euler
     /// @param star_pos Current position of the star
@@ -34,8 +34,8 @@ namespace symplectic_euler {
     /// @param iterations Number of iterations algorithm should run
     /// @param G Gravitational constant
     integrators::RunSummary run_symplectic_euler(const Vec2& star_pos, const Vec2& planet_pos,
-                                                 float star_mass, float planet_mass,
-                                                 float t, int iterations, float G,
+                                                 double star_mass, double planet_mass,
+                                                 double t, int iterations, double G,
                                                  const std::string& output_csv = "");
 }
 

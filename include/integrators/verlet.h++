@@ -18,7 +18,7 @@ namespace verlet {
     /// @param acceleration Given acceleration
     /// @param t Timestep
     /// @return Returns updated position
-    Vec2 update_position(const Vec2& position, const Vec2& velocity, const Vec2& acceleration, float t);
+    Vec2 update_position(const Vec2& position, const Vec2& velocity, const Vec2& acceleration, double t);
 
     /// @brief Updates the velocity of the orbiting object
     /// @param velocity Current velocity of the object
@@ -26,7 +26,7 @@ namespace verlet {
     /// @param new_acceleration Newly acquired acceleration
     /// @param t Timestep
     /// @return Returns updated velocity
-    Vec2 update_velocity(const Vec2& velocity, const Vec2& prior_acceleration, const Vec2& new_acceleration, float t);
+    Vec2 update_velocity(const Vec2& velocity, const Vec2& prior_acceleration, const Vec2& new_acceleration, double t);
 
     /// @brief Runs Velocity Verlet
     /// @param star_pos Current position of the star
@@ -37,8 +37,8 @@ namespace verlet {
     /// @param iterations Number of iterations algorithm should run
     /// @param G Gravitational constant
     integrators::RunSummary run_verlet(const Vec2& star_pos, const Vec2& planet_pos,
-                                       float star_mass, float planet_mass,
-                                       float t, int iterations, float G,
+                                       double star_mass, double planet_mass,
+                                       double t, int iterations, double G,
                                        const std::string& output_csv = "");
 }
 

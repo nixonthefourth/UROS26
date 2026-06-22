@@ -18,7 +18,7 @@ private: // Separation of concerns. Private parameters.
 
 public: // Public accessors
     // Constructor
-    stellar_object(float m, std::string  n, const Vec2& pos, const Vec2& v)
+    stellar_object(float m, std::string  n, const Vec2& pos)
     : mass(m), name(std::move(n)), position(pos) {
     }
 

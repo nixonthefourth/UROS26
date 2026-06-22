@@ -1,4 +1,4 @@
-# Runtime command: python3 scripts/main.py --output-root /Volumes/Maxtor --problem-count 200 --workers 4
+# Runtime command: python3 scripts/main.py --output-root /Volumes/Maxtor --problem-count 2000 --workers 4
 # Use your volume name
 
 from __future__ import annotations
@@ -84,6 +84,10 @@ SUMMARY_FIELDS = (
     "compute_time_seconds",
     "trajectory_csv",
     "orbit_plot",
+    "energy_plot",
+    "angular_momentum_plot",
+    "energy_relative_error_plot",
+    "angular_momentum_relative_error_plot",
 )
 
 
@@ -121,6 +125,49 @@ def plot_orbit(csv_path: Path, plot_path: Path, title: str, samples: int, max_po
     ax.set_title(title)
     ax.grid(True, linewidth=0.4, alpha=0.45)
     ax.legend(loc="best")
+    fig.tight_layout()
+    fig.savefig(plot_path)
+    plt.close(fig)
+
+
+def plot_time_series(
+    csv_path: Path,
+    plot_path: Path,
+    title: str,
+    field: str,
+    ylabel: str,
+    samples: int,
+    max_points: int,
+    log_scale: bool = False,
+) -> None:
+    configure_matplotlib()
+
+    import matplotlib
+
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    stride = max(1, samples // max_points)
+    time_values: list[float] = []
+    field_values: list[float] = []
+
+    with csv_path.open(newline="") as csv_file:
+        reader = csv.DictReader(csv_file)
+        for row in reader:
+            step = int(row["step"])
+            if step % stride == 0 or step == samples - 1:
+                time_values.append(float(row["time"]))
+                value = float(row[field])
+                field_values.append(log_safe(value) if log_scale else value)
+
+    fig, ax = plt.subplots(figsize=(9, 5), dpi=160)
+    ax.plot(time_values, field_values, linewidth=0.8)
+    ax.set_xlabel("time [yr]")
+    ax.set_ylabel(ylabel)
+    ax.set_title(title)
+    if log_scale:
+        ax.set_yscale("log")
+    ax.grid(True, linewidth=0.4, alpha=0.45)
     fig.tight_layout()
     fig.savefig(plot_path)
     plt.close(fig)
@@ -171,6 +218,10 @@ def run_problem(
 
             trajectory_csv = run_dir / "trajectory.csv"
             orbit_plot = run_dir / "orbit.png"
+            energy_plot = run_dir / "energy_conservation.png"
+            angular_momentum_plot = run_dir / "angular_momentum.png"
+            energy_relative_error_plot = run_dir / "energy_relative_error.png"
+            angular_momentum_relative_error_plot = run_dir / "angular_momentum_relative_error.png"
 
             summary = runner(
                 problem.star_pos,
@@ -189,6 +240,44 @@ def run_problem(
                 f"{spec.label} | sim {problem_id:04d} | dt={timestep:g}",
                 summary.samples,
                 max_plot_points,
+            )
+            plot_time_series(
+                trajectory_csv,
+                energy_plot,
+                f"{spec.label} Energy Conservation | sim {problem_id:04d} | dt={timestep:g}",
+                "energy",
+                "energy",
+                summary.samples,
+                max_plot_points,
+            )
+            plot_time_series(
+                trajectory_csv,
+                angular_momentum_plot,
+                f"{spec.label} Angular Momentum | sim {problem_id:04d} | dt={timestep:g}",
+                "angular_momentum",
+                "angular momentum",
+                summary.samples,
+                max_plot_points,
+            )
+            plot_time_series(
+                trajectory_csv,
+                energy_relative_error_plot,
+                f"{spec.label} Relative Energy Error | sim {problem_id:04d} | dt={timestep:g}",
+                "energy_relative_error",
+                "relative energy error",
+                summary.samples,
+                max_plot_points,
+                log_scale=True,
+            )
+            plot_time_series(
+                trajectory_csv,
+                angular_momentum_relative_error_plot,
+                f"{spec.label} Relative Angular Momentum Error | sim {problem_id:04d} | dt={timestep:g}",
+                "angular_momentum_relative_error",
+                "relative angular momentum error",
+                summary.samples,
+                max_plot_points,
+                log_scale=True,
             )
 
             rows.append(
@@ -209,6 +298,10 @@ def run_problem(
                         "planet_y": problem.planet_pos.y,
                         "trajectory_csv": str(trajectory_csv),
                         "orbit_plot": str(orbit_plot),
+                        "energy_plot": str(energy_plot),
+                        "angular_momentum_plot": str(angular_momentum_plot),
+                        "energy_relative_error_plot": str(energy_relative_error_plot),
+                        "angular_momentum_relative_error_plot": str(angular_momentum_relative_error_plot),
                     },
                 )
             )
@@ -376,6 +469,7 @@ def plot_summary_table(summary_path: Path, output_dir: Path) -> None:
         field: str,
         reducer: Callable[[Iterable[float]], float],
         max_points: int = 1_200,
+        log_scale: bool = False,
     ) -> None:
         fig, ax = plt.subplots(figsize=(10, 5), dpi=160)
 
@@ -404,7 +498,8 @@ def plot_summary_table(summary_path: Path, output_dir: Path) -> None:
 
                             index = step // stride
                             times_by_index.setdefault(index, []).append(float(trajectory_row["time"]))
-                            values_by_index.setdefault(index, []).append(log_safe(float(trajectory_row[field])))
+                            value = float(trajectory_row[field])
+                            values_by_index.setdefault(index, []).append(log_safe(value) if log_scale else value)
 
                 if not values_by_index:
                     continue
@@ -420,7 +515,8 @@ def plot_summary_table(summary_path: Path, output_dir: Path) -> None:
         ax.set_title(title)
         ax.set_xlabel("time [yr]")
         ax.set_ylabel(ylabel)
-        ax.set_yscale("log")
+        if log_scale:
+            ax.set_yscale("log")
         ax.grid(True, linewidth=0.4, alpha=0.45)
         ax.legend(loc="best", fontsize=8)
         fig.tight_layout()
@@ -459,16 +555,24 @@ def plot_summary_table(summary_path: Path, output_dir: Path) -> None:
                   "mean relative angular momentum error", "mean_angular_momentum_relative_error")
     boxplot("energy_error_boxplot.png", "Distribution of Relative Energy Errors",
             "mean relative energy error", "mean_energy_relative_error")
+    plot_trajectory_stat("energy_conservation_over_time.png", "Mean Energy Conservation Over Time",
+                         "energy", "energy", mean)
+    plot_trajectory_stat("angular_momentum_over_time.png", "Mean Angular Momentum Over Time",
+                         "angular momentum", "angular_momentum", mean)
     plot_trajectory_stat("relative_energy_error_over_time.png", "Mean Relative Energy Error Over Time",
-                         "relative energy error", "energy_relative_error", mean)
+                         "relative energy error", "energy_relative_error", mean, log_scale=True)
     plot_trajectory_stat("angular_momentum_error_over_time.png", "Mean Angular Momentum Error Over Time",
-                         "relative angular momentum error", "angular_momentum_relative_error", mean)
+                         "relative angular momentum error", "angular_momentum_relative_error", mean, log_scale=True)
+    plot_trajectory_stat("median_energy_conservation_over_time.png",
+                         "Median Energy Conservation Over Time", "energy", "energy", median)
+    plot_trajectory_stat("median_angular_momentum_over_time.png",
+                         "Median Angular Momentum Over Time", "angular momentum", "angular_momentum", median)
     plot_trajectory_stat("median_relative_energy_error_over_time.png",
                          "Median Relative Energy Error Over Time", "relative energy error",
-                         "energy_relative_error", median)
+                         "energy_relative_error", median, log_scale=True)
     plot_trajectory_stat("median_angular_momentum_error_over_time.png",
                          "Median Angular Momentum Error Over Time", "relative angular momentum error",
-                         "angular_momentum_relative_error", median)
+                         "angular_momentum_relative_error", median, log_scale=True)
 
     fig, ax = plt.subplots(figsize=(8, 5), dpi=160)
     for resolution in resolution_order:

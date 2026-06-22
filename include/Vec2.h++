@@ -11,25 +11,25 @@
 /// @param x Horizontal vector component
 /// @param y Vertical vector component
 struct Vec2 {
-    float x;
-    float y;
+    double x;
+    double y;
 
     // Constructors
     Vec2() : x(0.f), y(0.f) {}
-    Vec2(float xVal, float yVal) : x(xVal), y(yVal) {}
+    Vec2(double xVal, double yVal) : x(xVal), y(yVal) {}
 
     /// @brief Scalar multiplication
     /// @param scalar Scalar constant by which vector is multiplied
     /// @details Allows to multiply Vec2 structure by `scalar` parameter only.
     /// @return Returns the multiplied Vec2 implicitly.
-    Vec2 operator*(float scalar) const {
+    Vec2 operator*(double scalar) const {
         return Vec2(x * scalar, y * scalar);
     }
 
     /// @brief In-place multiplication via `*=`
     /// @param scalar Scalar constant by which vector is multiplied
     /// @return Returns a multiplied Vec2 structure
-    Vec2& operator*=(float scalar) {
+    Vec2& operator*=(double scalar) {
         x *= scalar;
         y *= scalar;
         return *this;
@@ -46,7 +46,7 @@ struct Vec2 {
     /// @param scalar Scalar constant by which the vector is multiplied.
     /// @details Checks whether the constant is non-zero to allow operation.
     /// @return Returns a new Vec2 value of divided `x` and `y`
-    Vec2 operator/(float scalar) const {
+    Vec2 operator/(double scalar) const {
         if (scalar != 0.f) {
             return Vec2(x / scalar, y / scalar);
         }
@@ -58,7 +58,7 @@ struct Vec2 {
     /// @param scalar Scalar constant by which the vector is multiplied.
     /// @details Checks whether the constant is non-zero to allow operation.
     /// @return Returns a divided Vec2 structure.
-    Vec2& operator/=(float scalar) {
+    Vec2& operator/=(double scalar) {
         if (scalar != 0.f) {
             x /= scalar;
             y /= scalar;
@@ -108,7 +108,7 @@ struct Vec2 {
 /// @param scalar Scalar multiplication constant.
 /// @param v Value by reference of the Vec2 structure.
 /// @return Returns multiplied value of Vec2 as `k * (i, j)`.
-inline Vec2 operator*(float scalar, const Vec2& v) {
+inline Vec2 operator*(double scalar, const Vec2& v) {
     return Vec2(v.x * scalar, v.y * scalar);
 }
 

@@ -18,7 +18,7 @@ namespace rk4 {
     /// @param star_mass Mass of the Star
     /// @param G Gravitational constant
     /// @return Returns acceleration of the orbiting object at the given position
-    Vec2 acceleration_update(const Vec2& star_pos, const Vec2& planet_pos, float star_mass, float G);
+    Vec2 acceleration_update(const Vec2& star_pos, const Vec2& planet_pos, double star_mass, double G);
 
     /// @brief Updates position in the RK4 scheme
     /// @param cur_position Current position of the orbiting object
@@ -29,7 +29,7 @@ namespace rk4 {
     /// @param G Gravitational constant
     /// @return Returns the updated position value using the fourth-order Runge-Kutta method
     Vec2 position_update(const Vec2& cur_position, const Vec2& cur_velocity,
-                         const Vec2& star_pos, float star_mass, float t, float G);
+                         const Vec2& star_pos, double star_mass, double t, double G);
 
     /// @brief Updates velocity in the RK4 scheme
     /// @param cur_position Current position of the orbiting object
@@ -40,7 +40,7 @@ namespace rk4 {
     /// @param G Gravitational constant
     /// @return Returns the updated velocity value using the fourth-order Runge-Kutta method
     Vec2 velocity_update(const Vec2& cur_position, const Vec2& cur_velocity,
-                         const Vec2& star_pos, float star_mass, float t, float G);
+                         const Vec2& star_pos, double star_mass, double t, double G);
 
     /// @brief Runs RK4
     /// @param star_pos Current position of the star
@@ -51,8 +51,8 @@ namespace rk4 {
     /// @param iterations Number of iterations algorithm should run
     /// @param G Gravitational constant
     integrators::RunSummary run_rk4(const Vec2& star_pos, const Vec2& planet_pos,
-                                    float star_mass, float planet_mass,
-                                    float t, int iterations, float G,
+                                    double star_mass, double planet_mass,
+                                    double t, int iterations, double G,
                                     const std::string& output_csv = "");
 }
 

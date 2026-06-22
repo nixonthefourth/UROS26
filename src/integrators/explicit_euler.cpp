@@ -14,7 +14,7 @@ namespace explicit_euler {
     /// @param t Timestep
     /// @return Returns the updated position value through the
     ///         r(n+1) = r(n) + v(n) * t formula
-    Vec2 position_update(const Vec2& cur_position, const Vec2& cur_velocity, const float t) {
+    Vec2 position_update(const Vec2& cur_position, const Vec2& cur_velocity, const double t) {
         return cur_position + cur_velocity * t;
     }
 
@@ -24,7 +24,7 @@ namespace explicit_euler {
     /// @param cur_acceleration Current acceleration of the orbiting object
     /// @return Returns the updated velocity value based on the following formula:
     ///         v(n+1) = v(n) + a(n) * t
-    Vec2 velocity_update(const Vec2& cur_velocity, const float t, const Vec2& cur_acceleration) {
+    Vec2 velocity_update(const Vec2& cur_velocity, const double t, const Vec2& cur_acceleration) {
         return cur_velocity + cur_acceleration * t;
     }
 
@@ -37,17 +37,17 @@ namespace explicit_euler {
     /// @param iterations Number of iterations algorithm should run
     /// @param G Gravitational constant
     integrators::RunSummary run_explicit_euler(const Vec2& star_pos, const Vec2& planet_pos,
-                                               const float star_mass, const float planet_mass,
-                                               const float t, const int iterations, const float G,
+                                               const double star_mass, const double planet_mass,
+                                               const double t, const int iterations, const double G,
                                                const std::string& output_csv) {
         // Find initial conditions of the problem
-        float distance = physics::find_distance(star_pos, planet_pos);
-        float orbital_speed = physics::find_velocity(star_mass, distance, G);
+        double distance = physics::find_distance(star_pos, planet_pos);
+        double orbital_speed = physics::find_velocity(star_mass, distance, G);
         Vec2 displacement = planet_pos;
         Vec2 velocity = physics::find_vel_direction(star_pos, planet_pos, distance ,orbital_speed);
-        float initial_energy = physics::find_energy_conservation(star_mass, planet_mass, G,
+        double initial_energy = physics::find_energy_conservation(star_mass, planet_mass, G,
                                                                     distance, velocity);
-        float initial_angular_momentum = physics::find_angular_momentum(planet_mass, velocity, planet_pos - star_pos);
+        double initial_angular_momentum = physics::find_angular_momentum(planet_mass, velocity, planet_pos - star_pos);
         integrators::RunRegistry registry(output_csv);
         registry.record(0, 0.0, displacement, velocity, distance, initial_energy, initial_angular_momentum, 0.0, 0.0);
 
@@ -70,14 +70,14 @@ namespace explicit_euler {
             // Calculate conservations and errors
 
             // Energy
-            float energy_conservation = physics::find_energy_conservation(star_mass, planet_mass, G,
+            double energy_conservation = physics::find_energy_conservation(star_mass, planet_mass, G,
                                                                           distance, velocity);
-            float energy_error = physics::energy_error(energy_conservation, initial_energy);
+            double energy_error = physics::energy_error(energy_conservation, initial_energy);
 
             // Angular Momentum
-            float angular_momentum_conservation = physics::find_angular_momentum(planet_mass, velocity,
+            double angular_momentum_conservation = physics::find_angular_momentum(planet_mass, velocity,
                                                                                  displacement - star_pos);
-            float angular_error = physics::angular_error(angular_momentum_conservation, initial_angular_momentum);
+            double angular_error = physics::angular_error(angular_momentum_conservation, initial_angular_momentum);
             registry.record(i, i * t, displacement, velocity, distance, energy_conservation,
                             angular_momentum_conservation, energy_error, angular_error);
         }
