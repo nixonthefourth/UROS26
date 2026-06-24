@@ -41,7 +41,7 @@ namespace physics {
     /// @param G Constant of gravitational attraction
     /// @return Returns the circular orbital velocity of the object
     double find_velocity(double m, double distance, const double G) {
-        return sqrt((G*m) / distance);
+        return 0.8 * sqrt((G*m) / distance);
     }
 
     /// @brief Finds the direction of the current velocity.
