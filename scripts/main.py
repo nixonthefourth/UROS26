@@ -29,9 +29,16 @@ G_AU_SOLAR_YEAR = 4.0 * math.pi * math.pi
 DEFAULT_PROBLEM_COUNT = 20
 DEFAULT_WORKERS = 4
 RESOLUTIONS = (
-    ("dt_1e-2", 1e-2, 100_000),
-    ("dt_1e-3", 1e-3, 1_000_000),
+    ("dt_1e-1", 1e-1, 10_000_000),
+    ("dt_1e-2", 1e-2, 100_000_000),
+    ("dt_1e-3", 1e-3, 1_000_000_000),
+    ("dt_1e-4", 1e-4, 10_000_000_000),
 )
+
+# Resolutions whose iteration counts exceed this threshold will be downsampled
+# to SUMMARY_DOWNSAMPLE_TARGET steps when producing summary table plots so
+# that all resolutions contribute an equal number of time-points to comparisons.
+SUMMARY_DOWNSAMPLE_TARGET = 10_000_000
 
 
 @dataclass(frozen=True)
@@ -168,6 +175,13 @@ def plot_time_series(
     if log_scale:
         ax.set_yscale("log")
     ax.grid(True, linewidth=0.4, alpha=0.45)
+    # Zoom the horizontal axis tightly to the data so inter-integrator
+    # variation is cleaner to see without excess whitespace.
+    if time_values:
+        t_min, t_max = min(time_values), max(time_values)
+        t_range = t_max - t_min
+        h_pad = t_range * 0.01 if t_range > 0 else 1.0
+        ax.set_xlim(t_min - h_pad, t_max + h_pad)
     fig.tight_layout()
     fig.savefig(plot_path)
     plt.close(fig)
@@ -381,11 +395,17 @@ def plot_summary_table(summary_path: Path, output_dir: Path) -> None:
 
     def bar_plot(filename: str, title: str, ylabel: str, values: dict[tuple[str, str], float],
                  log_scale: bool = False) -> None:
+        n_res = len(resolution_order)
         x_positions = list(range(len(integrator_order)))
-        width = 0.36
-        offsets = (-width / 2, width / 2)
+        # Distribute bars evenly; leave a small gap between integrator groups.
+        total_bar_width = 0.75
+        width = total_bar_width / n_res
+        offsets = [
+            -total_bar_width / 2 + width * (i + 0.5)
+            for i in range(n_res)
+        ]
 
-        fig, ax = plt.subplots(figsize=(10, 5), dpi=160)
+        fig, ax = plt.subplots(figsize=(12, 5), dpi=160)
         for resolution, offset in zip(resolution_order, offsets):
             heights = [values.get((integrator, resolution), 0.0) for integrator in integrator_order]
             ax.bar(
@@ -472,6 +492,7 @@ def plot_summary_table(summary_path: Path, output_dir: Path) -> None:
         log_scale: bool = False,
     ) -> None:
         fig, ax = plt.subplots(figsize=(10, 5), dpi=160)
+        all_times: list[float] = []
 
         for resolution in resolution_order:
             for integrator in integrator_order:
@@ -479,8 +500,15 @@ def plot_summary_table(summary_path: Path, output_dir: Path) -> None:
                 if not group:
                     continue
 
-                samples = max(1, int(group[0]["iterations"]) + 1)
-                stride = max(1, samples // max_points)
+                raw_iterations = int(group[0]["iterations"])
+                # Downsample longer runs so every resolution contributes at most
+                # SUMMARY_DOWNSAMPLE_TARGET time-points, making the comparison fair.
+                effective_samples = min(raw_iterations + 1, SUMMARY_DOWNSAMPLE_TARGET + 1)
+                stride = max(1, (raw_iterations + 1) // effective_samples)
+                # Then further stride to stay within the plotting max_points budget.
+                plot_stride = max(1, effective_samples // max_points)
+                combined_stride = stride * plot_stride
+
                 times_by_index: dict[int, list[float]] = {}
                 values_by_index: dict[int, list[float]] = {}
 
@@ -493,10 +521,10 @@ def plot_summary_table(summary_path: Path, output_dir: Path) -> None:
                         reader = csv.DictReader(trajectory_file)
                         for trajectory_row in reader:
                             step = int(trajectory_row["step"])
-                            if step % stride != 0 and step != samples - 1:
+                            if step % combined_stride != 0 and step != raw_iterations:
                                 continue
 
-                            index = step // stride
+                            index = step // combined_stride
                             times_by_index.setdefault(index, []).append(float(trajectory_row["time"]))
                             value = float(trajectory_row[field])
                             values_by_index.setdefault(index, []).append(log_safe(value) if log_scale else value)
@@ -505,8 +533,10 @@ def plot_summary_table(summary_path: Path, output_dir: Path) -> None:
                     continue
 
                 indices = sorted(values_by_index)
+                t_series = [mean(times_by_index[index]) for index in indices]
+                all_times.extend(t_series)
                 ax.plot(
-                    [mean(times_by_index[index]) for index in indices],
+                    t_series,
                     [reducer(values_by_index[index]) for index in indices],
                     linewidth=1.0,
                     label=f"{integrator}, {resolution.replace('_', '=')}",
@@ -519,6 +549,12 @@ def plot_summary_table(summary_path: Path, output_dir: Path) -> None:
             ax.set_yscale("log")
         ax.grid(True, linewidth=0.4, alpha=0.45)
         ax.legend(loc="best", fontsize=8)
+        # Zoom horizontal axis tightly so inter-integrator differences are clearer.
+        if all_times:
+            t_min, t_max = min(all_times), max(all_times)
+            t_range = t_max - t_min
+            h_pad = t_range * 0.01 if t_range > 0 else 1.0
+            ax.set_xlim(t_min - h_pad, t_max + h_pad)
         fig.tight_layout()
         fig.savefig(output_dir / filename)
         plt.close(fig)
