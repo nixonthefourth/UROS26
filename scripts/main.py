@@ -29,10 +29,9 @@ G_AU_SOLAR_YEAR = 4.0 * math.pi * math.pi
 DEFAULT_PROBLEM_COUNT = 20
 DEFAULT_WORKERS = 4
 RESOLUTIONS = (
-    ("dt_1e-1", 1e-1, 10_000_000),
-    ("dt_1e-2", 1e-2, 100_000_000),
-    ("dt_1e-3", 1e-3, 1_000_000_000),
-    ("dt_1e-4", 1e-4, 10_000_000_000),
+    ("dt_1e-1", 1e-1, 1_000_000),
+    ("dt_1e-2", 1e-2, 10_000_000),
+    ("dt_1e-3", 1e-3, 100_000_000),
 )
 
 # Resolutions whose iteration counts exceed this threshold will be downsampled
@@ -227,6 +226,8 @@ def run_problem(
 
         for resolution_name, timestep, iterations in RESOLUTIONS:
             simulation_id = f"sim_{problem_id:04d}_{spec.folder}_{resolution_name}"
+            print("Simulating:", simulation_id)
+            
             run_dir = Path(output_root) / spec.folder / f"sim_{problem_id:04d}" / resolution_name
             run_dir.mkdir(parents=True, exist_ok=True)
 
