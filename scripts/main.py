@@ -37,7 +37,7 @@ RESOLUTIONS = (
 # Resolutions whose iteration counts exceed this threshold will be downsampled
 # to SUMMARY_DOWNSAMPLE_TARGET steps when producing summary table plots so
 # that all resolutions contribute an equal number of time-points to comparisons.
-SUMMARY_DOWNSAMPLE_TARGET = 10_000_000
+SUMMARY_DOWNSAMPLE_TARGET = 1_000_000
 
 
 @dataclass(frozen=True)
