@@ -1,4 +1,4 @@
-# Runtime command: python3 scripts/main.py --output-root /Volumes/Maxtor --problem-count 2000 --workers 4
+# Runtime command: python3 scripts/main.py --output-root /Volumes/Maxtor --problem-count 150 --workers 3
 # Use your volume name
 
 from __future__ import annotations
@@ -26,18 +26,18 @@ from uros26 import Vec2, generate, integrators  # noqa: E402
 
 
 G_AU_SOLAR_YEAR = 4.0 * math.pi * math.pi
-DEFAULT_PROBLEM_COUNT = 20
-DEFAULT_WORKERS = 4
+DEFAULT_PROBLEM_COUNT = 150
+DEFAULT_WORKERS = 3
 RESOLUTIONS = (
-    ("dt_1e-1", 1e-1, 1_000_000),
-    ("dt_1e-2", 1e-2, 10_000_000),
-    ("dt_1e-3", 1e-3, 100_000_000),
+    ("dt_1e-1", 1e-1, 100_000),
+    ("dt_1e-2", 1e-2, 1_000_000),
+    ("dt_1e-3", 1e-3, 10_000_000),
 )
 
 # Resolutions whose iteration counts exceed this threshold will be downsampled
 # to SUMMARY_DOWNSAMPLE_TARGET steps when producing summary table plots so
 # that all resolutions contribute an equal number of time-points to comparisons.
-SUMMARY_DOWNSAMPLE_TARGET = 1_000_000
+SUMMARY_DOWNSAMPLE_TARGET = 100_000
 
 
 @dataclass(frozen=True)
