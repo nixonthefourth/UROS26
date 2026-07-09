@@ -1,4 +1,4 @@
-# Runtime command: python3 scripts/main.py --output-root /Volumes/Maxtor --problem-count 150 --workers 3
+# Runtime command: python3 scripts/main.py --output-root /Volumes/Maxtor --problem-count 120 --workers 3
 # Use your volume name
 
 from __future__ import annotations
@@ -97,11 +97,22 @@ SUMMARY_FIELDS = (
 )
 
 
+## @brief Retrieves the integrator runner function from the corresponding module.
+## @param spec The integrator specification containing the folder and runner name.
+## @return Returns the callable integration function.
 def integrator_runner(spec: IntegratorSpec) -> Callable:
     module = getattr(integrators, spec.folder)
     return getattr(module, spec.runner_name)
 
 
+## @brief Plots the orbital trajectory from the simulation data.
+## @param csv_path Path to the saved trajectory CSV file.
+## @param plot_path Path where the generated orbit plot will be saved.
+## @param title Title of the output plot.
+## @param samples Total number of samples recorded.
+## @param max_points Maximum number of data points to plot for visual clarity.
+## @details Downsamples the trajectory based on the stride to ensure smooth plotting without excess data overhead.
+## @return Returns None.
 def plot_orbit(csv_path: Path, plot_path: Path, title: str, samples: int, max_points: int) -> None:
     configure_matplotlib()
 
@@ -136,6 +147,16 @@ def plot_orbit(csv_path: Path, plot_path: Path, title: str, samples: int, max_po
     plt.close(fig)
 
 
+## @brief Generates a time-series plot for a specific field in the trajectory.
+## @param csv_path Path to the trajectory CSV file.
+## @param plot_path Path where the generated time-series plot will be saved.
+## @param title Title of the output plot.
+## @param field Name of the CSV column to plot.
+## @param ylabel Label for the Y-axis.
+## @param samples Total number of samples recorded.
+## @param max_points Maximum number of data points to plot.
+## @param log_scale Boolean flag to enable logarithmic scaling for the Y-axis.
+## @return Returns None.
 def plot_time_series(
     csv_path: Path,
     plot_path: Path,
@@ -186,6 +207,10 @@ def plot_time_series(
     plt.close(fig)
 
 
+## @brief Constructs a summary row dictionary mapping output stats to metadata.
+## @param summary Summary object returned by the simulation runner.
+## @param metadata Dictionary containing descriptive keys like simulation_id and integrator details.
+## @return Returns a dictionary merged with the summary object metrics.
 def summary_to_row(summary, metadata: dict[str, object]) -> dict[str, object]:
     return {
         **metadata,
@@ -211,6 +236,14 @@ def summary_to_row(summary, metadata: dict[str, object]) -> dict[str, object]:
     }
 
 
+## @brief Runs the specified orbital mechanics problem across all integrators and resolutions.
+## @param problem_id Integer ID for the generated problem.
+## @param output_root Output directory path string.
+## @param seed_base Base integer value applied to generate reproducible problems.
+## @param max_plot_points Upper limit of data points per generated plot.
+## @param gravitational_constant Constant of gravitational attraction.
+## @details Simulates the system using all specs in INTEGRATORS, produces trajectory logic, generates plots, and returns a compiled list of metrics.
+## @return Returns a list of dictionaries with recorded simulation metric rows.
 def run_problem(
     problem_id: int,
     output_root: str,
@@ -324,6 +357,10 @@ def run_problem(
     return rows
 
 
+## @brief Writes simulation metrics to a CSV file.
+## @param summary_path Path where the summary file will be saved.
+## @param rows List of dictionary entries mapping column headers to corresponding data.
+## @return Returns None.
 def write_summary(summary_path: Path, rows: list[dict[str, object]]) -> None:
     with summary_path.open("w", newline="") as csv_file:
         writer = csv.DictWriter(csv_file, fieldnames=SUMMARY_FIELDS)
@@ -331,11 +368,17 @@ def write_summary(summary_path: Path, rows: list[dict[str, object]]) -> None:
         writer.writerows(rows)
 
 
+## @brief Reads existing simulation summary data from a CSV file.
+## @param summary_path Path to the existing CSV file.
+## @return Returns a compiled list of string dictionaries mapping columns to data.
 def read_summary(summary_path: Path) -> list[dict[str, str]]:
     with summary_path.open(newline="") as csv_file:
         return list(csv.DictReader(csv_file))
 
 
+## @brief Calculates the arithmetic mean for an iterable of floats.
+## @param values An iterable containing floating point values.
+## @return Returns the calculated mean as a float, or 0.0 if empty.
 def mean(values: Iterable[float]) -> float:
     values = list(values)
     if not values:
@@ -344,10 +387,16 @@ def mean(values: Iterable[float]) -> float:
     return sum(values) / len(values)
 
 
+## @brief Prevents domain errors when taking the logarithm of values.
+## @param value Target float to evaluate.
+## @details Enforces a base lower-limit threshold for inputs expected in log-scaled plots.
+## @return Returns the value directly if greater than zero, otherwise 1e-18.
 def log_safe(value: float) -> float:
     return value if value > 0.0 else 1e-18
 
 
+## @brief Defines local storage cache directories for matplotlib to prevent configuration conflicts.
+## @return Returns None.
 def configure_matplotlib() -> None:
     temp_root = Path(os.environ.get("TMPDIR", "/tmp"))
     matplotlib_cache = temp_root / "uros26_matplotlib"
@@ -358,6 +407,10 @@ def configure_matplotlib() -> None:
     os.environ.setdefault("XDG_CACHE_HOME", str(font_cache))
 
 
+## @brief Generates comprehensive visualization charts correlating data across simulated resolutions and integrators.
+## @param summary_path The path pointing to the summary CSV data.
+## @param output_dir The directory path designated for resulting aggregated plots.
+## @return Returns None.
 def plot_summary_table(summary_path: Path, output_dir: Path) -> None:
     configure_matplotlib()
 
@@ -638,6 +691,8 @@ def plot_summary_table(summary_path: Path, output_dir: Path) -> None:
     plt.close(fig)
 
 
+## @brief Constructs and parses the command-line arguments needed for the runtime.
+## @return Returns the argparse.Namespace containing all passed configurations.
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Run the UROS26 parallel orbital simulation campaign."
@@ -671,6 +726,8 @@ def parse_args() -> argparse.Namespace:
     return args
 
 
+## @brief Execution entry point configuring the worker pool execution or rendering summary plots directly.
+## @return Returns None.
 def main() -> None:
     args = parse_args()
 
