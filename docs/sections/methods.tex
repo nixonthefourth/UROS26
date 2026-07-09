@@ -43,15 +43,20 @@ are computed analytically, alongside baseline stability diagnostics for angular 
 
 Simulations are executed concurrently via a fixed-size worker pool of four CPU cores, with each worker assigned an
 independently generated orbital problem subject to the physical constraints described above.
+Although, during the research process certain empirical findings were discovered, hence the cores have been reduced to three
+to supplement RAM use of the simulating device.
 For every assigned problem, the worker executes all five candidate integrators -- Explicit Euler, Symplectic Euler,
 Leapfrog, Velocity Verlet, and RK4 -- under identical initial conditions, ensuring that comparisons between schemes
 are made on a like-for-like basis.
 
+There are 120 problems to be solved.
+
 \paragraph{Resolution study.}
-For each integrator, two solutions are computed:
+For each integrator, three solutions are computed:
 \begin{itemize}
-    \item \textbf{Baseline resolution:} $N = 10^5$ steps with $\Delta t = 10^{-2}$.
-    \item \textbf{Higher resolution:} $N = 10^6$ steps with $\Delta t = 10^{-3}$.
+    \item \textbf{Baseline resolution:} $N = 10^5$ steps with $\Delta t = 10^{-1}$.
+    \item \textbf{Medium resolution:} $N = 10^6$ steps with $\Delta t = 10^{-2}$.
+    \item \textbf{High Resolution:} $N = 10^7$ steps with $\Delta t = 10^{-3}$.
 \end{itemize}
 The higher-resolution solution serves as the reference trajectory for convergence analysis, against which the
 baseline solution is compared. As both regimes share the product $N \cdot \Delta t$, this comparison isolates the
@@ -81,7 +86,8 @@ plot are produced:
     angular momentum error over time.
     \item \textit{Summary comparison plots} across integrators: average runtime, maximum and mean relative energy
     error, and maximum and mean relative angular momentum error.
-    \item \textit{Convergence plots}: an overlay of trajectories at $\Delta t = 10^{-2}$ and $\Delta t = 10^{-3}$,
+    \item \textit{Convergence plots}: an overlay of trajectories at $\Delta t = 10^{-1}$, $\Delta t = 10^{-2}$ and
+    $\Delta t = 10^{-3}$,
     a comparison of numerical drift between the two resolutions, and a comparison of accuracy versus computational
     cost across all integrators.
 \end{enumerate}
