@@ -1,0 +1,155 @@
+\section{Preliminary Discussion}
+
+\subsection{Interpretation of the Results}
+
+Across all the simulated systems, Explicit Euler consistently showed the poorest conservation of both energy and
+angular momentum, meanwhile Leapfrog, Velocity Verlet and Symplectic Euler demonstrated substantially greater
+long-term stability.
+Although RK4 produced the smallest energy errors at sufficiently small timesteps, its behaviour deteriorated
+rapidly at coarse resolutions, highlighting the importance of timestep selection for higher-order
+non-symplectic methods.
+
+Explicit Euler demonstates such behaviour due to the accumulated truncation errors over each timestep.
+Symplectic methods by their mathematical design preserve the Hamiltonian geometry.
+Instead of estimating a precise value of energy, symplectic methods revolve around the true value in the sinusoid.
+For example, the RK4 algorithm minimises the local truncation error with the higher resolution, yet doesn't preserve
+the phase space.
+Hence why, there is a difference between local accuracy and long-term stability.
+
+\subsection{Relation to Hamiltonian Mechanics}
+
+The observed behaviour closely matches theoretical expectations for Hamiltonian systems.
+Symplectic methods do not conserve energy exactly; instead they preserve a nearby modified Hamiltonian,
+resulting in bounded oscillatory error rather than secular drift.
+This distinction is central to backward error analysis: a symplectic integrator can be shown to solve, up
+to exponentially small corrections in the timestep, the flow of a shadow Hamiltonian $\tilde{H}$ that lies close
+to the true Hamiltonian $H$. Because $\tilde{H}$ is itself exactly conserved by the discrete map, the numerically
+computed energy oscillates within a fixed band about the true value rather than drifting away from it.
+Non-symplectic methods such as RK4 possess no equivalent conserved quantity, so their local truncation errors
+are free to accumulate coherently over long integrations, producing the secular drift observed at coarse
+resolutions.
+
+\subsection{Angular Momentum Conservation}
+
+The conservation of angular momentum provides a complementary, and in some respects more discriminating, test
+of integrator quality than energy alone. In the continuous two-body problem, angular momentum
+$\mathbf{L} = \mathbf{r} \times \mathbf{p}$ is conserved exactly because the gravitational potential depends
+only on the separation $|\mathbf{r}|$ and is therefore invariant under rotations; by Noether's theorem, this
+rotational symmetry guarantees a corresponding conserved quantity.
+
+The discrete integrators inherit this symmetry to varying degrees. Symplectic Euler, Leapfrog and Velocity
+Verlet update velocity using a force evaluated at the current (or half-step) position, and this force is
+always directed along the instantaneous radius vector. Because the discrete torque $\mathbf{r} \times
+\mathbf{F}(\mathbf{r})$ vanishes identically at every timestep, exactly as it does in the continuous system,
+these methods conserve angular momentum to machine precision regardless of the timestep chosen. This is a
+structural property of the update rule rather than an accuracy effect, and it explains why angular momentum
+conservation for the symplectic methods did not degrade even where energy error grew at coarse resolutions.
+
+Explicit Euler and RK4 do not share this property. Explicit Euler updates position and velocity from
+inconsistent, staggered information (the velocity used to advance position is not the velocity implied by
+the force just computed), which introduces a small effective torque at each step; this error compounds
+secularly, matching the drift observed in energy. RK4, despite averaging force evaluations across several
+sub-stages within a step, does not evaluate the force along a single self-consistent trajectory, so it also
+fails to preserve $\mathbf{r} \times \mathbf{F} = \mathbf{0}$ exactly at the discrete level. Its angular
+momentum error was nonetheless substantially smaller than that of Explicit Euler at fine timesteps, consistent
+with its higher local order of accuracy, but the error was not bounded in the same structural sense as the
+symplectic methods and would be expected to grow if the timestep were coarsened further or the integration
+extended over longer timescales. Taken together, the angular momentum results reinforce the central conclusion
+of this study: symplectic structure, not local order of accuracy, is the primary determinant of long-term
+qualitative fidelity in Hamiltonian simulations.
+
+\subsection{RK4 Behaviour}
+
+RK4 possesses fourth-order local accuracy, but this accuracy assumes sufficiently small timesteps.
+At coarse resolutions, the large integration interval dominates truncation error and the method rapidly
+loses stability. Once the timestep becomes sufficiently small, the fourth-order convergence dominates,
+allowing RK4 to outperform all remaining methods in terms of instantaneous energy error.
+
+However, despite this excellent short-term accuracy, RK4 remains non-symplectic and therefore cannot guarantee
+long-term conservation of invariants in Hamiltonian systems.
+
+\subsection{Computational Cost v. Accuracy}
+
+Although RK4 produced the lowest numerical error at fine resolution, this came at approximately four force evaluations
+per timestep and the highest runtime among all methods.
+Leapfrog and Velocity Verlet therefore provide a considerably better compromise between computational efficiency and
+conservation accuracy.
+
+\subsection{Velocity Verlet v. Leapfrog}
+
+Velocity Verlet and Leapfrog are algebraically equivalent formulations of the same second-order symplectic
+method, differing only in how the half-step velocity is stored and reported, and the results confirm this
+equivalence at every level examined. In runtime, Leapfrog was marginally the fastest integrator at higher
+resolutions, with Velocity Verlet close behind it; the two are not expected to differ by more than
+implementation overhead, since both require one force evaluation per timestep. In energy conservation,
+Leapfrog was found to overlap almost exactly with Velocity Verlet on the error-versus-timestep comparison,
+with both methods consistently outperforming Symplectic Euler by roughly two orders of magnitude at a given
+resolution. The angular momentum results show the same equivalence in its clearest form: both integrators
+produced an identical mean absolute angular momentum value across all three tested resolutions, and their
+relative angular momentum error sat at the floating-point noise floor of approximately $10^{-13}$,
+independent of timestep. This lends strong empirical support to the theoretical expectation that the two
+schemes trace out the same discrete trajectory, and any residual difference between them observed here is
+attributable to implementation detail (such as the point in the step at which velocity is reported) rather
+than to a genuine difference in the underlying numerical method. Consequently, neither integrator can be
+said to be superior to the other on the criteria examined in this study; the choice between them in practice
+would come down to convenience, for instance whether a synchronised position-velocity pair at each full step
+(as reported by Velocity Verlet) is more useful downstream than the staggered representation used internally
+by Leapfrog.
+
+\subsection{Hypothesis}
+
+The hypothesis was only partially supported. Velocity Verlet demonstrated an excellent balance between runtime
+and conservation accuracy, closely matching Leapfrog due to their mathematical equivalence.
+However, RK4 produced lower energy errors at sufficiently fine timesteps, although at substantially greater
+computational cost and without preserving the symplectic structure.
+
+\subsection{Limitations}
+
+While the results presented here are consistent with established theory on symplectic integration, several
+limitations constrain the scope of the conclusions and point towards natural extensions of this work.
+
+\paragraph{Fixed timestep integration.} All integrators were evaluated at a single, fixed timestep rather than
+with an adaptive scheme. A fixed $\Delta t$ is necessarily a compromise: it must be small enough to resolve
+the fastest dynamics of the orbit, typically near perihelion where the angular velocity is greatest, while
+remaining computationally tractable over the full integration window. An adaptive-timestep approach, whether
+based on local truncation error estimation (as in embedded Runge--Kutta pairs) or on a time-regularising
+coordinate transformation such as the Sundman transformation, would allow the timestep to shrink automatically
+in regions of high curvature and expand elsewhere, and would likely narrow the performance gap observed
+between RK4 and the symplectic methods at coarse resolutions. Adapting a symplectic method to variable
+timesteps is non-trivial, however, since naive step-size control generally destroys the symplectic property
+of the map, and this trade-off was not explored here.
+
+\paragraph{Higher-order symplectic compositions.} The symplectic methods considered in this study (Symplectic
+Euler, Leapfrog and Velocity Verlet) are all first- or second-order accurate. Higher-order symplectic
+integrators can be constructed by composing second-order symplectic maps with carefully chosen step-size
+coefficients, as in the fourth-order schemes of Forest and Ruth or Yoshida. Such methods would combine the
+long-term structural stability demonstrated here with markedly reduced local error, and a comparison against
+them would clarify whether the accuracy advantage of RK4 at fine timesteps persists against a symplectic method
+of matching order.
+
+\paragraph{Restriction to a two-body system.} The analysis was restricted to an isolated two-body Hamiltonian
+system, for which an analytical Keplerian solution exists and can be used as a ground truth. Extending the
+comparison to $N$-body simulations, where no closed-form solution is generally available, would test whether
+the relative ranking of integrators established here persists in the presence of additional gravitational
+interactions, and would allow investigation of numerical performance in genuinely chaotic orbital
+configurations, where nearby trajectories diverge exponentially and long-term structural conservation becomes
+even more important than local accuracy. Related settings of particular interest include planetary systems
+exhibiting mean-motion resonances, where small integration errors can be resonantly amplified over long
+timescales, and the long-term stability analysis of exoplanetary systems, which typically requires integration
+over timescales of $10^{6}$--$10^{9}$ orbits and is correspondingly sensitive to the choice of integrator.
+
+\paragraph{Computational scaling.} The present implementation was run in serial on three cores of a consumer device,
+and no attempt was made to characterise performance at scale. $N$-body extensions of this work would benefit from
+GPU acceleration, which parallelises the pairwise force calculations that dominate the computational cost of
+large simulations, and from shared- or distributed-memory parallelisation using OpenMP or MPI respectively.
+A systematic scaling study would be needed to establish whether the computational-cost conclusions drawn here
+for a single two-body pair generalise to the substantially larger force-evaluation counts required by $N$-body
+and resonance studies.
+
+\paragraph{Newtonian approximation.} All simulations assumed Newtonian gravity, neglecting relativistic
+corrections. For systems with strong or close-orbit gravitational fields, such as tight binary star systems
+or bodies passing close to a compact object, post-Newtonian corrections introduce additional effects,
+including apsidal precession, that a purely Newtonian integrator cannot reproduce regardless of its symplectic
+properties. Incorporating these corrections would require modifying the force law itself rather than the
+integration scheme, and represents a natural extension once the present comparison is established on the
+simpler Newtonian case.
