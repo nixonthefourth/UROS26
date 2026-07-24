@@ -1,9 +1,35 @@
+from __future__ import annotations
+
+
 class Vec2:
     x: float
     y: float
 
     def __init__(self, x: float = 0.0, y: float = 0.0) -> None: ...
     def perpendicular(self) -> Vec2: ...
+
+
+class RunSummary:
+    final_energy_relative_error: float
+    final_angular_momentum_relative_error: float
+    mean_energy: float
+    median_energy: float
+    min_energy: float
+    max_energy: float
+    mean_angular_momentum: float
+    median_angular_momentum: float
+    min_angular_momentum: float
+    max_angular_momentum: float
+    mean_energy_relative_error: float
+    median_energy_relative_error: float
+    min_energy_relative_error: float
+    max_energy_relative_error: float
+    mean_angular_momentum_relative_error: float
+    median_angular_momentum_relative_error: float
+    min_angular_momentum_relative_error: float
+    max_angular_momentum_relative_error: float
+    compute_time_seconds: float
+    samples: int
 
 
 class _Physics:
@@ -22,9 +48,16 @@ class _Physics:
 
 
 class _Generate:
+    class ProblemSetup:
+        star_mass: float
+        planet_mass: float
+        star_pos: Vec2
+        planet_pos: Vec2
+
     def solar_mass(self) -> float: ...
     def planetary_mass(self, stellar_mass: float) -> float: ...
     def separation_distance(self) -> Vec2: ...
+    def problem_setup(self, seed: int) -> ProblemSetup: ...
 
 
 class _ExplicitEuler:
@@ -37,7 +70,8 @@ class _ExplicitEuler:
         t: float,
         iterations: int,
         G: float,
-    ) -> None: ...
+        output_csv: str = "",
+    ) -> RunSummary: ...
 
 
 class _SymplecticEuler:
@@ -50,7 +84,8 @@ class _SymplecticEuler:
         t: float,
         iterations: int,
         G: float,
-    ) -> None: ...
+        output_csv: str = "",
+    ) -> RunSummary: ...
 
 
 class _Verlet:
@@ -63,7 +98,8 @@ class _Verlet:
         t: float,
         iterations: int,
         G: float,
-    ) -> None: ...
+        output_csv: str = "",
+    ) -> RunSummary: ...
 
 
 class _Rk4:
@@ -76,7 +112,8 @@ class _Rk4:
         t: float,
         iterations: int,
         G: float,
-    ) -> None: ...
+        output_csv: str = "",
+    ) -> RunSummary: ...
 
 
 class _Leapfrog:
@@ -89,7 +126,22 @@ class _Leapfrog:
         t: float,
         iterations: int,
         G: float,
-    ) -> None: ...
+        output_csv: str = "",
+    ) -> RunSummary: ...
+
+
+class _Leapfrog4:
+    def run_yoshida4(
+        self,
+        star_pos: Vec2,
+        planet_pos: Vec2,
+        star_mass: float,
+        planet_mass: float,
+        t: float,
+        iterations: int,
+        G: float,
+        output_csv: str = "",
+    ) -> RunSummary: ...
 
 
 class _Integrators:
@@ -98,6 +150,8 @@ class _Integrators:
     verlet: _Verlet
     rk4: _Rk4
     leapfrog: _Leapfrog
+    leapfrog_4th: _Leapfrog4
+    leapfrog4: _Leapfrog4
 
 
 physics: _Physics

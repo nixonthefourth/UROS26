@@ -7,6 +7,7 @@
 #include "integrators/run_registry.h++"
 #include "integrators/rk4.h++"
 #include "integrators/symplectic_euler.h++"
+#include "integrators/leapfrog_4th.h++"
 #include "integrators/verlet.h++"
 #include "physics.h++"
 #include "procedural_generation.h++"
@@ -121,4 +122,13 @@ PYBIND11_MODULE(uros26, m) {
                         py::arg("star_mass"), py::arg("planet_mass"),
                         py::arg("t"), py::arg("iterations"), py::arg("G"),
                         py::arg("output_csv") = "");
+
+    py::module_ leapfrog_4th_module = integrators_module.def_submodule("leapfrog_4th");
+    leapfrog_4th_module.def("run_yoshida4", &leapfrog_4th::run_yoshida4,
+                            py::arg("star_pos"), py::arg("planet_pos"),
+                            py::arg("star_mass"), py::arg("planet_mass"),
+                            py::arg("t"), py::arg("iterations"), py::arg("G"),
+                            py::arg("output_csv") = "");
+    integrators_module.attr("leapfrog4") = leapfrog_4th_module;
+    py::module_::import("sys").attr("modules")["uros26.integrators.leapfrog4"] = leapfrog_4th_module;
 }

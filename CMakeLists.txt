@@ -33,6 +33,8 @@ add_library(UROS26_core
         include/procedural_generation.h++
         include/stellar_object.h++
         include/integrators/runtime_timer.h++
+        src/integrators/leapfrog_4th.cpp
+        include/integrators/leapfrog_4th.h++
 )
 
 set_target_properties(UROS26_core PROPERTIES POSITION_INDEPENDENT_CODE ON)

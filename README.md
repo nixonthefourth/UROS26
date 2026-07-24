@@ -2,7 +2,7 @@
 
 **Investigating Comparative Performance of Numerical Integrators on a Hamiltonian Two-Body System Under Newtonian Mechanics**
 
-UROS-26 is a C++20 orbital simulation engine that models the classical two-body gravitational problem under five numerical integration schemes — Explicit Euler, Symplectic Euler, Velocity Verlet, Leapfrog, and 4th-order Runge-Kutta (RK4). The core engine is exposed to Python via [pybind11](https://github.com/pybind/pybind11), and a parallel simulation campaign + analysis pipeline is provided in Python for generating trajectories, conservation diagnostics, and comparison plots.
+UROS-26 is a C++20 orbital simulation engine that models the classical two-body gravitational problem under six numerical integration schemes — Explicit Euler, Symplectic Euler, Velocity Verlet, Leapfrog, 4th-order Leapfrog via Yoshida composition, and 4th-order Runge-Kutta (RK4). The core engine is exposed to Python via [pybind11](https://github.com/pybind/pybind11), and a parallel simulation campaign + analysis pipeline is provided in Python for generating trajectories, conservation diagnostics, and comparison plots.
 
 ---
 
@@ -178,7 +178,7 @@ The native executable is currently a minimal entry point (`src/main.cpp`) and do
 
 ### Python simulation campaign
 
-The main workflow is the parallel simulation driver at `scripts/main.py`, which procedurally generates two-body problems, runs all five integrators at two timestep resolutions, writes per-run trajectory CSVs, and produces comparison plots with `matplotlib`.
+The main workflow is the parallel simulation driver at `scripts/main.py`, which procedurally generates two-body problems, runs all six integrators at three timestep resolutions, writes per-run trajectory CSVs, and produces comparison plots with `matplotlib`.
 
 From the repository root, with your virtual environment active and the project built:
 
@@ -228,6 +228,8 @@ summary = integrators.leapfrog.run_leapfrog(
 
 print(summary.final_energy_relative_error)
 ```
+
+The fourth-order Leapfrog/Yoshida runner is exposed as `integrators.leapfrog_4th.run_yoshida4(...)` and accepts the same arguments as the other integrators.
 
 See `uros26.pyi` for the full typed interface.
 

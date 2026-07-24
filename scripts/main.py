@@ -51,6 +51,7 @@ INTEGRATORS = (
     IntegratorSpec("explicit_euler", "Explicit Euler", "run_explicit_euler"),
     IntegratorSpec("symplectic_euler", "Symplectic Euler", "run_symplectic_euler"),
     IntegratorSpec("leapfrog", "Leapfrog", "run_leapfrog"),
+    IntegratorSpec("leapfrog_4th", "Leapfrog 4th Order", "run_yoshida4"),
     IntegratorSpec("verlet", "Velocity Verlet", "run_verlet"),
     IntegratorSpec("rk4", "RK4", "run_rk4"),
 )
