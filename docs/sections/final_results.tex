@@ -1,7 +1,43 @@
 \section{Final Results}
 
 After conducting the final experimental run to identify the best-performing integrator with updated parameters
-of a higher-order leapfrog integrator on par with previous integrators in the comparison table, the following
+of a higher-order Leapfrog-4 integrator on par with previous integrators in the comparison table, the following
 was discovered.
 
 \subsection{Runtime}
+
+As shown on the Figure 13, we may observe Leapfrog being the fastest performing integrator at higher resolutions.
+The result is close to the Velocity Verlet integrator, although the two integrators are mathematically related.
+RK4 shows the highest possible runtime due to the fact of it having two more orders.
+
+The updated Leapfrog-4 integrator shows the runtime higher to its predecessor, although this is explained by
+the application of higher order Yoshida method.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=1\textwidth]{figures/final/average_runtime_seconds.png}
+    \caption{Average Integrator Runtime}
+\end{figure}
+
+\subsection{Energy Conservation}
+
+Figure 14 presents the distribution of relative energy errors for each integrator across the three tested
+timesteps. Explicit Euler sits consistently around a relative error of $10^0$ regardless of resolution, with a
+very narrow spread, indicating that the method fails to conserve energy irrespective of how finely the
+timestep is refined. Symplectic Euler, Leapfrog, and Velocity Verlet all show a clear downward trend in
+error as the timestep decreases, which is expected of lower-order methods whose local truncation error
+scales with $\Delta t$. RK4 displays the widest spread of the five integrators, ranging from below $10^{-12}$
+at $\Delta t = 10^{-3}$ up to over $10^1$ at $\Delta t = 10^{-1}$, showing that its performance is highly
+sensitive to the choice of timestep.
+
+The Leapfrog-4 integrator shows the lowest spread of the relative energy error distribution at its highest
+timestep of $\Delta t = 10^{-3}$ offering higher near-machine precision than previous Leapfrog and RK4.
+It is also worth mentioning that due to the higher order of Leapfrog-4, the precision is higher even at lower
+resolutions of $\Delta t = 10^{-1}$ and $\Delta t = 10^{-2}$.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=1\textwidth]{figures/final/energy_error_boxplot.png}
+    \caption{Relative Energy Error Box Plot}
+\end{figure}
+
