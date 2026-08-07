@@ -1,5 +1,5 @@
 \section{ANALYTICAL SOLUTIONS}
-\subsection{NORMALISED SYSTEM}
+\subsection{Normalised System}
 
 Aligning with the goals of this research we will show the analytical solutions for a singular problem setup across
 five integration schemes under ten timesteps.
@@ -82,7 +82,7 @@ Rearranging gives
     G = 4\pi^2.
 \end{equation}
 
-\subsection{ANALYTICAL PROBLEM}
+\subsection{Analytical Problem}
 
 The problem definition is as follows: A star of one solar mass $M = 1\,M_\odot$ is fixed at the origin.
 A planet orbiting the star is $333000^{-1}$ of solar mass and is placed at initial position
@@ -92,7 +92,7 @@ solar masses, with $G = 4\pi^2\,\mathrm{AU}^3\,\mathrm{yr}^{-2}\,M_\odot^{-1}$.
 The simulation procedurally generates two objects containing their mass and coordinates, while the rest of the
 calculations are presented through the later simulation.
 
-\subsection{INITIAL VALUES}
+\subsection{Initial Values}
 
 \subsubsection*{Initial distance}
 
@@ -398,7 +398,7 @@ energies in $M_\odot\,\mathrm{AU}^2\,\mathrm{yr}^{-2}$, angular momenta in $M_\o
     \caption{RK4, $\Delta t = 10^{-3}$\,yr. Both $|\vec{v}|$ and $r$ are constant to 3 significant figures throughout; energy errors are entirely at floating-point rounding level. RK4 is not symplectic but is 4th-order accurate, so local errors are $\mathcal{O}(\Delta t^5)$.}
 \end{table}
 
-\subsection{SUMMARY OF INTEGRATOR PERFORMANCE}
+\subsection{Summary of Integrator Performance}
 
 \begin{table}[H]
     \centering

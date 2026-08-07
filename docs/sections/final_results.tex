@@ -1,4 +1,4 @@
-\section{Final Results}
+\section{FINAL RESULTS}
 
 After conducting the final experimental run to identify the best-performing integrator with updated parameters
 of a higher-order Leapfrog-4 integrator on par with previous integrators in the comparison table, the following
@@ -41,3 +41,69 @@ resolutions of $\Delta t = 10^{-1}$ and $\Delta t = 10^{-2}$.
     \caption{Relative Energy Error Box Plot}
 \end{figure}
 
+Figure 15 shows the mean relative energy error plotted directly against timestep on a log-log scale. Explicit
+Euler remains flat at approximately $10^0$ across all three timesteps, confirming the boxplot observation
+that reducing $\Delta t$ does not meaningfully improve its energy behaviour over the tested range. Symplectic
+Euler and Velocity Verlet both decrease steadily as the timestep shrinks, with Velocity Verlet consistently
+outperforming Symplectic Euler by roughly two orders of magnitude at a given resolution. Leapfrog overlaps
+almost exactly with Velocity Verlet on this plot, which is unsurprising given the two schemes are algebraically
+equivalent formulations of the same method.
+
+Explicit Euler stays within the same error range of $10^{0}$ like in the previous tests confirming preliminary data.
+
+RK4 isn't the standout here anymore. Symplectic Leapfrog-4 shows higher precision at higher resolution reaching
+number within range of $10^{-10}$ and $10^{-11}$. Although, it's worth noting that at a lower resolution of
+$\Delta t = 10^{-1}$ of Leapfrog-4, the relative energy error is higher than of Leapfrog and Velocity Verlet algorithms.
+The reason so far is unknown.
+
+Comparing the 4th-order methods like RK4 and Leapfrog-4 we can also arrive at the conclusion of Leapfrog-4 drastically
+outperforming the non-symplectic RK4 algorithm. The geometry of the phase-space isn't preserved in RK4, hence supposedly
+this would affect the lower resolution data.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=1\textwidth]{figures/final/energy_error_vs_timestep.png}
+    \caption{Relative Energy Error vs Timestep}
+\end{figure}
+
+Figures 16 through 18 break the mean, median, and maximum relative energy error down by integrator and
+resolution as grouped bar charts. All three present essentially the same ranking: at $\Delta t = 10^{-3}$,
+the ordering from worst to best is Explicit Euler, Symplectic Euler, then Leapfrog and Velocity Verlet
+together and RK4, with Leapfrog-4 producing the smallest error of the group by a wide margin.
+Investigating the maximum relative energy error graph, we can observe that 4th-order Leapfrog algorithm
+still produces results better at higher resolutions due to its both symplectic nature and higher order
+integration. Yet, when observing the $\Delta t = 10^{-1}$ the maximum relative energy error is higher that of 
+prior version of Leapfrog and Velocity Verlet. Although, the median data graph presents the error resolution at
+$\Delta t = 10^{-1}$ nearly identical to the Leapfrog and Velocity Verlet methods.
+The pattern of increased resolution with increased precision is confirmed, and Leapfrog-4 algorithm succeeds
+by a wide margin comparing to the rest of the integrators. 
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=1\textwidth]{figures/final/mean_relative_energy_error.png}
+    \caption{Mean Relative Energy Error by Integrator and Resolution}
+\end{figure}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=1\textwidth]{figures/final/median_relative_energy_error.png}
+    \caption{Median Relative Energy Error by Integrator and Resolution}
+\end{figure}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=1\textwidth]{figures/final/max_relative_energy_error.png}
+    \caption{Maximum Relative Energy Error by Integrator and Resolution}
+\end{figure}
+
+Finally, Figure 19 shows the mean absolute energy conservation value for each integrator. Explicit Euler,
+Symplectic Euler, Leapfrog, and Velocity Verlet all sit near zero on this linear scale at every resolution
+tested. RK4 is the only integrator to depart visibly from zero, and only at $\Delta t = 10^{-1}$, where the
+mean energy value rises to approximately $0.04$, consistent with the instability already noted in the earlier
+figures.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=1\textwidth]{figures/final/mean_energy.png}
+    \caption{Mean Energy Conservation by Integrator and Resolution}
+\end{figure}
