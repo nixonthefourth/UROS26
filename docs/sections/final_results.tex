@@ -107,3 +107,59 @@ figures.
     \includegraphics[width=1\textwidth]{figures/final/mean_energy.png}
     \caption{Mean Energy Conservation by Integrator and Resolution}
 \end{figure}
+
+\subsection{Angular Momentum Conservation}
+
+Figure 20 plots the mean relative angular momentum error against timestep for each integrator. Explicit
+Euler again remains flat at approximately $10^0$ across the tested range, mirroring its behaviour for
+energy conservation. Symplectic Euler, Leapfrog, and Velocity Verlet all sit near the floating-point noise
+floor, around $10^{-13}$, and are largely insensitive to the choice of timestep, which is consistent with
+the fact that these are symplectic integrators applied to a central force problem where angular momentum
+is an exactly conserved quantity of the underlying Hamiltonian. RK4 again shows the steepest dependence on
+timestep of any integrator, falling from just below $10^0$ at $\Delta t = 10^{-1}$ to below $10^{-9}$ at
+$\Delta t = 10^{-3}$. Leapfrog-4 follows the behaviour similar to that of its neighbouring algorithms
+Velocity Verlet and Leapfrog. The data observed is within the range of a rounding error, although in real-world
+scenarios performance is similar in the angular momentum conservation parameter.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=1\textwidth]{figures/final/angular_momentum_error_vs_timestep.png}
+    \caption{Angular Momentum Error vs Timestep}
+\end{figure}
+
+Figures 21 through 23 present the mean, median, and maximum relative angular momentum error broken down
+by integrator and resolution. Across all four, Symplectic Euler, Leapfrog, Leapfrog-4 and Velocity Verlet
+remain several orders of magnitude below Explicit Euler and RK4 at every resolution, with their error values
+hovering around $10^{-13}$ regardless of timestep. RK4 is the only integrator among the five whose angular
+momentum error responds strongly to a decrease in timestep, improving from around $10^{-1}$ at
+$\Delta t = 10^{-1}$ to around $10^{-9}$ at $\Delta t = 10^{-3}$ in an average case.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=1\textwidth]{figures/final/mean_relative_angular_momentum_error.png}
+    \caption{Mean Relative Angular Momentum Error by Integrator and Resolution}
+\end{figure}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=1\textwidth]{figures/final/median_relative_angular_momentum_error.png}
+    \caption{Median Relative Angular Momentum Error by Integrator and Resolution}
+\end{figure}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=1\textwidth]{figures/final/max_relative_angular_momentum_error.png}
+    \caption{Maximum Relative Angular Momentum Error by Integrator and Resolution}
+\end{figure}
+
+Figure 24 shows the mean absolute angular momentum value for each integrator. Symplectic Euler, Leapfrog, Leapfrog-4,
+and Velocity Verlet produce an identical value across all three resolutions, at approximately $7.7 \times
+10^{-5}$, indicating exact conservation to within floating-point precision independent of timestep.
+Explicit Euler departs from this value and drifts further as the timestep increases, while RK4 also departs
+from the reference value, most noticeably at $\Delta t = 10^{-1}$.
+ 
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=1\textwidth]{figures/preliminary/mean_angular_momentum.png}
+    \caption{Mean Angular Momentum Conservation by Integrator and Resolution}
+\end{figure}
