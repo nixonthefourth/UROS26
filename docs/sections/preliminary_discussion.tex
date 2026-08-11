@@ -44,6 +44,9 @@ always directed along the instantaneous radius vector. Because the discrete torq
 these methods conserve angular momentum to machine precision regardless of the timestep chosen. This is a
 structural property of the update rule rather than an accuracy effect, and it explains why angular momentum
 conservation for the symplectic methods did not degrade even where energy error grew at coarse resolutions.
+This structural distinction was formally established by \citet{zhang1995}, who showed that symplectic
+integrators conserve angular momentum exactly while nonsymplectic integrators generally do not; the results
+obtained here for the two-body problem are consistent with that finding.
 
 Explicit Euler and RK4 do not share this property. Explicit Euler updates position and velocity from
 inconsistent, staggered information (the velocity used to advance position is not the velocity implied by
