@@ -10,6 +10,47 @@ This preserves phase-space geometry of the problem, while arriving at an accurat
 
 Long-term simulations benefit from the shorter compute time, since a project running for 100 seconds over a
 million iterations can in reality be 27 hours of compute-time, which isn't ideal on consumer devices.
-Yet, spearating this into multi-core allows for nine hours of compute over three cores.
+Yet, separating this into multi-core allows for nine hours of compute over three cores.
 Hence why even a 20-second reduction from the previously most accurate method is a significant achievement,
-which also allows for more accurate and quicker results.
+which also allows for both more accurate and quicker results.
+
+\paragraph{Symplecticity Over Local Order.} The comparative results across both experiments reinforce that
+long-term qualitative fidelity in Hamiltonian systems is governed primarily by the structural, symplectic
+properties of an integrator rather than by its local order of accuracy. Explicit Euler's monotonic drift,
+the bounded oscillatory error of Symplectic Euler, Leapfrog, and Velocity Verlet, and the resolution-dependent
+instability of RK4 together confirm that a non-symplectic method, however high its formal order, cannot
+guarantee conservation over extended integration windows. Leapfrog-4 combines the best of both regimes:
+the higher-order accuracy associated with methods like RK4, and the bounded, non-drifting error behaviour
+guaranteed by the symplectic structure of Leapfrog. This is precisely why it consistently outperformed RK4
+in the final experiment, despite RK4's fourth-order local accuracy.
+
+\paragraph{Angular Momentum as a Discriminating Diagnostic.} Angular momentum conservation proved to be a
+particularly sharp diagnostic of integrator quality, separating the symplectic methods (Symplectic Euler,
+Leapfrog, Velocity Verlet, and Leapfrog-4), which conserved angular momentum to floating-point precision
+regardless of timestep, from Explicit Euler and RK4, whose errors scaled directly with resolution. This
+structural distinction, arising from whether or not the discrete torque $\mathbf{r} \times \mathbf{F}(\mathbf{r})$
+vanishes identically at each step, offers a robust and computationally cheap criterion for evaluating candidate
+integrators independent of energy-based diagnostics.
+
+\paragraph{Hypothesis Outcome.} The initial hypothesis, that Velocity Verlet would offer the best trade-off
+between computational efficiency and energy fidelity among the five baseline integrators, was largely supported
+by the first experiment. However, the subsequent development of Leapfrog-4 demonstrated that this trade-off
+could be improved upon further: a composed higher-order symplectic scheme retains Velocity Verlet's structural
+conservation guarantees while substantially reducing energy error at a given resolution, at a computational
+cost far below that of RK4.
+
+\paragraph{Future Work.} The limitations identified in Section 8.4 point directly to the next steps for this
+research. Extending the comparison to adaptive or variable timestep schemes would clarify how much of RK4's
+coarse-resolution instability can be mitigated without integrating unnecessarily finely, while addressing the
+non-trivial challenge of preserving symplecticity under step-size control. Generalising the present two-body
+analysis to N-body systems, particularly those exhibiting mean-motion resonances or chaotic dynamics, would
+test whether the ranking established here persists when no analytical ground-truth trajectory is available.
+Finally, incorporating GPU or distributed-memory parallelisation, along with post-Newtonian corrections for
+strong-field or close-orbit regimes, would extend the applicability of this work beyond the idealised,
+single-pair, Newtonian setting studied here.
+
+\paragraph{Closing Remark.} Taken together, these results support the broader conclusion that the pursuit of
+higher-order accuracy in Hamiltonian simulation should not come at the expense of symplectic structure.
+Leapfrog-4 stands out as the strongest candidate among the integrators examined in this study, offering
+long-term energy and angular momentum conservation competitive with, and in several respects exceeding, that
+of RK4, while remaining computationally tractable for extended orbital simulations.
