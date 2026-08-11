@@ -1,0 +1,15 @@
+\section{CONCLUSIONS}
+
+Finishing this study the following conclusions were drawn-up:
+
+\paragraph{Superior Integrator Performance.} Throughout two conducted experiments, a higher-order symplectic method
+of Leapfrog fourth-order was concluded to be the most accurate and effective one out of all tested.
+Although this method is slightly slower than Velocity Verlet or Leapfrog, it produces much more accurate long-term
+results for energy and angular momentum conservation.
+This preserves phase-space geometry of the problem, while arriving at an accurate analytical solution.
+
+Long-term simulations benefit from the shorter compute time, since a project running for 100 seconds over a
+million iterations can in reality be 27 hours of compute-time, which isn't ideal on consumer devices.
+Yet, spearating this into multi-core allows for nine hours of compute over three cores.
+Hence why even a 20-second reduction from the previously most accurate method is a significant achievement,
+which also allows for more accurate and quicker results.

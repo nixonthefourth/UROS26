@@ -1,0 +1,41 @@
+\section{FINAL DISCUSSION}
+
+\subsection{Interpretation of the Results}
+
+Across all the simulated systems, Explicit Euler consistently showed the poorest conservation of both energy and
+angular momentum, meanwhile Leapfrog, Velocity Verlet and Symplectic Euler demonstrated substantially greater
+long-term stability.
+Leapfrog-4 shows the smallest energy errors at smaller timesteps without behaviour deterioration at coarser resolutions.
+This highlights the significance of higher-order symplectic methods. Although, with a computation time trade off.
+
+Explicit Euler demonstates such behaviour due to the accumulated truncation errors over each timestep.
+Symplectic methods by their mathematical design preserve the Hamiltonian geometry.
+Instead of estimating a precise value of energy, symplectic methods revolve around the true value in the sinusoid.
+For example, the RK4 algorithm minimises the local truncation error with the higher resolution, yet doesn't preserve
+the phase space.
+Leapfrog-4 contains its symplectic algorithmic nature and geometry, which already preserves phase-space by design
+and with a higher resolution can produce more accurate results.
+Hence why, there is a difference between local accuracy and long-term stability.
+
+\subsection{Leapfrog-4 Behaviour}
+
+The fourth-order Leapfrog method has both excellent short-term and long-term performance in the two-body simulations.
+It's symplecticity can guarantee a long-term performance in a simulation, although with a big trade-off of computational cost.
+As earlier results have showed, Leapfrog-4 is about 10 second slower than it's second-order variation.
+
+\subsection{Computational Cost v. Accuracy}
+
+Although RK4 previously produced the lowest numerical error at fine resolution, this came at approximately four force evaluations
+per timestep and the highest runtime among all methods.
+Leapfrog and Velocity Verlet therefore provide a considerably better compromise between computational efficiency and
+conservation accuracy.
+The higher-order Leapfrog-4 not only has showed a quicker computer time for the same set of problems succeeding RK4 by 20 second,
+but also conserving the data more accurately long-term than RK4.
+
+\subsection{Limitations}
+
+While the results presented here are consistent with established theory on symplectic integration, several
+limitations constrain the scope of the conclusions and point towards natural extensions of this work.
+Some previous limitations have been extended in the study, such as adding a symplectic higher-order method.
+Although, the study still lacks variable timestep integration, N-Body problem setups, computational scaling
+and Newtonian approximation, which all were metnioned earlier.
